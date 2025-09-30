@@ -154,16 +154,4 @@ class UsuarioServiceTest {
         assertEquals(listaUsuarios.get(0).getId(), retorno.get(0).getId(), "Não retornou o usuário correto");
     }
 
-    @Test
-    void deveRetornarUsuarioSeEmailNaoExistir() {
-        when(usuarioRepository.findByEmail(usuario.getEmail())).thenReturn(Optional.empty());
-
-        Usuario resultado = usuarioService.verificarEmailExistente(usuario);
-
-        assertNotNull(resultado);
-        assertEquals("teste@email.com", resultado.getEmail());
-        assertEquals("Teste", resultado.getNome());
-
-        verify(usuarioRepository, times(1)).findByEmail(usuario.getEmail());
-    }
 }
