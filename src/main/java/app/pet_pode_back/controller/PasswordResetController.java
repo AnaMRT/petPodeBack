@@ -31,7 +31,7 @@ public class PasswordResetController {
     public ResponseEntity<String> forgotPassword(@RequestParam("email") String email) {
         try {
             usuarioService.solicitarRedefinicaoSenha(email);
-            return ResponseEntity.ok("Instruções de redefinição de senha enviadas por e-mail.");
+            return ResponseEntity.ok("Código de redefinição de senha enviado por e-mail.");
         } catch (Exception e) {
             return ResponseEntity.status(400).body(e.getMessage());
         }
@@ -40,7 +40,7 @@ public class PasswordResetController {
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordDTO dto) {
         try {
-            usuarioService.redefinirSenha(dto.getToken(), dto.getNovaSenha());
+            usuarioService.redefinirSenha(dto.getCodigo(), dto.getNovaSenha());
             return ResponseEntity.ok("Senha redefinida com sucesso.");
         } catch (Exception e) {
             return ResponseEntity.status(400).body(e.getMessage());

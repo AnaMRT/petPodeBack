@@ -10,9 +10,8 @@ public class PasswordResetToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String token;
-
+    @Column(nullable = false)
+    private String codigo;
     @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
@@ -24,21 +23,44 @@ public class PasswordResetToken {
     private boolean used = false;
 
     // Getters e Setters
-    public Long getId() { return id; }
 
-    public String getToken() { return token; }
+    public Long getId() {
+        return id;
+    }
 
-    public void setToken(String token) { this.token = token; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public Usuario getUsuario() { return usuario; }
+    public String getCodigo() {
+        return codigo;
+    }
 
-    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+    public void setCodigo(String codigo) {
+        this.codigo = codigo;
+    }
 
-    public LocalDateTime getExpirationDate() { return expirationDate; }
+    public Usuario getUsuario() {
+        return usuario;
+    }
 
-    public void setExpirationDate(LocalDateTime expirationDate) { this.expirationDate = expirationDate; }
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+    }
 
-    public boolean isUsed() { return used; }
+    public LocalDateTime getExpirationDate() {
+        return expirationDate;
+    }
 
-    public void setUsed(boolean used) { this.used = used; }
+    public void setExpirationDate(LocalDateTime expirationDate) {
+        this.expirationDate = expirationDate;
+    }
+
+    public boolean isUsed() {
+        return used;
+    }
+
+    public void setUsed(boolean used) {
+        this.used = used;
+    }
 }

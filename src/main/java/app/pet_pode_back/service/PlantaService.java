@@ -63,5 +63,11 @@ public class PlantaService {
         return new ArrayList<>(resultado);
     }
 
+    //public void remover(UUID palntaId) {
+      //  Plantas planta = plantaRepository.findById(palntaId)
+        //        .orElseThrow(() -> new RuntimeException("Planta não encontrada"));
+
+      //  plantaRepository.delete(planta);
+  //  }
 
 }
