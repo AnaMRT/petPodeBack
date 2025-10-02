@@ -1,6 +1,7 @@
 
 package app.pet_pode_back.service;
 
+import app.pet_pode_back.exception.RegistroNaoEncontradoException;
 import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.model.Plantas;
 import app.pet_pode_back.model.Usuario;
@@ -63,11 +64,13 @@ public class PlantaService {
         return new ArrayList<>(resultado);
     }
 
-    //public void remover(UUID palntaId) {
-      //  Plantas planta = plantaRepository.findById(palntaId)
-        //        .orElseThrow(() -> new RuntimeException("Planta não encontrada"));
 
-      //  plantaRepository.delete(planta);
-  //  }
-
+    public void remover(UUID id) {
+        Optional<Plantas> busca = plantaRepository.findById(id);
+        if (busca.isPresent()) {
+            plantaRepository.delete(busca.get());
+        } else {
+            throw new RegistroNaoEncontradoException("planta nao encontrada");
+        }
+    }
 }

@@ -76,6 +76,8 @@ public class UsuarioService {
          usuarioRepository.delete(usuario);
     }
 
+
+
     /*public Usuario verificarEmailExistente(Usuario usuario) {
         Optional<Usuario> emailExistente = usuarioRepository.findByEmail(usuario.getEmail());
 
