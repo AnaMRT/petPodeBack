@@ -1,13 +1,12 @@
 package app.pet_pode_back.dto;
 
 public class ResetPasswordDTO {
-    private String token;
+    private String codigo;
     private String novaSenha;
 
-    // Getters e Setters
-    public String getToken() { return token; }
+    public String getCodigo() { return codigo; }
 
-    public void setToken(String token) { this.token = token; }
+    public void setCodigo(String codigo) { this.codigo = codigo; }
 
     public String getNovaSenha() { return novaSenha; }
 

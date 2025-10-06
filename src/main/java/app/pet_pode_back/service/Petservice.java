@@ -37,4 +37,6 @@ public class Petservice {
     public List<Pet> buscarPetsDoUsuarioPorNomeParcial(UUID usuarioId, String termo) {
         return petRepository.findByUsuarioIdAndNomeContainingIgnoreCase(usuarioId, termo);
     }
+
+
 }

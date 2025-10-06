@@ -68,6 +68,12 @@ public class PlantaController {
     }
 
 
+    @DeleteMapping(value = { "{id}" },
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Plantas> remover(@PathVariable("id") UUID id) {
+        plantaService.remover(id);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }
 
 

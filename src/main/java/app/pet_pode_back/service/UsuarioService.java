@@ -1,31 +1,21 @@
 package app.pet_pode_back.service;
 
 import app.pet_pode_back.dto.UsuarioUpdateDTO;
-import app.pet_pode_back.exception.ParametroInvalidoException;
-import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.PasswordResetTokenRepository;
 import app.pet_pode_back.repository.UsuarioRepository;
 
 import app.pet_pode_back.model.PasswordResetToken;
-import app.pet_pode_back.model.Usuario;
-import app.pet_pode_back.repository.PasswordResetTokenRepository;
-import app.pet_pode_back.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Random;
 import java.util.UUID;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class UsuarioService {
@@ -86,6 +76,8 @@ public class UsuarioService {
          usuarioRepository.delete(usuario);
     }
 
+
+
     /*public Usuario verificarEmailExistente(Usuario usuario) {
         Optional<Usuario> emailExistente = usuarioRepository.findByEmail(usuario.getEmail());
 
@@ -99,42 +91,36 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        String token = UUID.randomUUID().toString();
+        String codigo = String.format("%06d", new Random().nextInt(999999)); // Gera PIN de 6 dígitos
+
         PasswordResetToken resetToken = new PasswordResetToken();
-        resetToken.setToken(token);
+        resetToken.setCodigo(codigo);
         resetToken.setUsuario(usuario);
-        resetToken.setExpirationDate(LocalDateTime.now().plusMinutes(15));
+        resetToken.setExpirationDate(LocalDateTime.now().plusMinutes(10));
         resetToken.setUsed(false);
 
         resetTokenRepository.save(resetToken);
 
-        String link = "petpode://reset-password?token=" + token;
+        String corpoEmail = "Seu código de verificação é: " + codigo + "\n" +
+                "Este código expira em 10 minutos.";
 
-        // 🔹 Aqui você monta o HTML
-        String corpoEmail = "<p>Clique no link para redefinir sua senha:</p>"
-                + "<p><a href='" + link + "'>Redefinir senha</a></p>"
-                + "<br/>"
-                + "<p>Ou copie e cole no navegador: " + link + "</p>";
-
-        // 🔹 E aqui você envia
         emailService.enviarEmail(
                 usuario.getEmail(),
-                "Redefinição de senha",
+                "Código de verificação para redefinir senha",
                 corpoEmail
         );
     }
 
-
-    public void redefinirSenha(String token, String novaSenha) {
-        PasswordResetToken resetToken = resetTokenRepository.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Token inválido."));
+    public void redefinirSenha(String codigo, String novaSenha) {
+        PasswordResetToken resetToken = resetTokenRepository.findByCodigo(codigo)
+                .orElseThrow(() -> new RuntimeException("Código inválido."));
 
         if (resetToken.isUsed()) {
-            throw new RuntimeException("Token já foi utilizado.");
+            throw new RuntimeException("Código já foi utilizado.");
         }
 
         if (resetToken.getExpirationDate().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Token expirado.");
+            throw new RuntimeException("Código expirado.");
         }
 
         Usuario usuario = resetToken.getUsuario();

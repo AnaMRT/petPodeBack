@@ -46,23 +46,23 @@ public class AuthController {
 
     @PostMapping("/cadastro")
     public ResponseEntity<?> register(@RequestBody Usuario novoUsuario) {
-        // Verificar se email já existe
+
         if (usuarioRepository.findByEmail(novoUsuario.getEmail()).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("Erro: Email já cadastrado");
         }
 
-        // Criptografar a senha antes de salvar
+
         String senhaCriptografada = passwordEncoder.encode(novoUsuario.getSenha());
         novoUsuario.setSenha(senhaCriptografada);
 
-        // Salvar o usuário no banco
+
         Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
 
-        // Gerar token para o usuário criado
+
         String token = jwtUtil.gerarToken(usuarioSalvo.getId());
 
-        // Retornar token para o frontend
+
         return ResponseEntity.ok(Collections.singletonMap("token", token));
     }
 

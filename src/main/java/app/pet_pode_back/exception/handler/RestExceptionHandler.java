@@ -1,6 +1,7 @@
 package app.pet_pode_back.exception.handler;
 import app.pet_pode_back.exception.ParametroInvalidoException;
 import app.pet_pode_back.exception.RegistroNaoEncontradoException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -24,6 +25,14 @@ public class RestExceptionHandler {
     public ResponseEntity<ErroResponse> trataParametroInvalidoException(ParametroInvalidoException ex) {
         ErroResponse errorResponse = new ErroResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
         return new ResponseEntity<ErroResponse>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseEntity<ErroResponse> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
+        String mensagem = "Este usuário já existe.";
+        ErroResponse errorResponse = new ErroResponse(HttpStatus.CONFLICT.value(), mensagem);
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
 
 
