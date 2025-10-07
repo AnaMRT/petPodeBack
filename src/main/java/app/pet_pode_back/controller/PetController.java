@@ -1,6 +1,8 @@
 package app.pet_pode_back.controller;
 
 import app.pet_pode_back.dto.PetUpdateDTO;
+import app.pet_pode_back.exception.PermissionDeniedException;
+import app.pet_pode_back.exception.PetNotFoundException;
 import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.security.JwtUtil;
 import app.pet_pode_back.service.Petservice;
@@ -48,7 +50,7 @@ public class PetController {
 
             UUID usuarioId = JwtUtil.extrairUsuarioId(token.trim());
 
-            Pet petAtualizado = petService.editarPet(petId, usuarioId, dto);
+            Pet petAtualizado = petService.editarPet(usuarioId, petId, dto);
             return ResponseEntity.ok(petAtualizado);
 
         } catch (io.jsonwebtoken.JwtException e) {
@@ -74,10 +76,13 @@ public class PetController {
 
         } catch (io.jsonwebtoken.JwtException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        } catch (RuntimeException e) {
+        } catch (PetNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (PermissionDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
     }
+
 
     @GetMapping
     public ResponseEntity<List<Pet>> listarPets(@RequestHeader("Authorization") String token) {

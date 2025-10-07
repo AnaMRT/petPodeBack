@@ -2,6 +2,8 @@ package app.pet_pode_back.service;
 
 import app.pet_pode_back.dto.PetUpdateDTO;
 import app.pet_pode_back.dto.UsuarioUpdateDTO;
+import app.pet_pode_back.exception.PermissionDeniedException;
+import app.pet_pode_back.exception.PetNotFoundException;
 import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.PetRepository;
@@ -55,14 +57,15 @@ public class Petservice {
 
     public void removerPet(UUID petId, UUID usuarioId) {
         Pet pet = petRepository.findById(petId)
-                .orElseThrow(() -> new RuntimeException("Pet não encontrado"));
+                .orElseThrow(() -> new PetNotFoundException("Pet não encontrado"));
 
         if (!pet.getUsuario().getId().equals(usuarioId)) {
-            throw new RuntimeException("Você não tem permissão para editar este pet.");
+            throw new PermissionDeniedException("Você não tem permissão para editar este pet.");
         }
 
         petRepository.delete(pet);
     }
+
 
     public List<Pet> listarPetsPorUsuario(UUID usuarioId) {
         return petRepository.findAllByUsuarioId(usuarioId);

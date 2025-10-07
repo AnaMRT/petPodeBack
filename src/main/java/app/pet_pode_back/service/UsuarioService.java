@@ -78,14 +78,7 @@ public class UsuarioService {
 
 
 
-    /*public Usuario verificarEmailExistente(Usuario usuario) {
-        Optional<Usuario> emailExistente = usuarioRepository.findByEmail(usuario.getEmail());
 
-        if(emailExistente.isPresent()) {
-            throw new ParametroInvalidoException("Este email já está cadastrado. Tente novamente");
-        }
-        return usuario;
-    }*/
 
     public void solicitarRedefinicaoSenha(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
