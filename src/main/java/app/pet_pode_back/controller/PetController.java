@@ -1,5 +1,6 @@
 package app.pet_pode_back.controller;
 
+import app.pet_pode_back.dto.PetUpdateDTO;
 import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.security.JwtUtil;
 import app.pet_pode_back.service.Petservice;
@@ -38,6 +39,58 @@ public class PetController {
 
         Pet novoPet = petService.salvarPet(pet, usuarioId);
         return ResponseEntity.ok(novoPet);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Pet> editarPet(
+            @PathVariable("id") UUID petId,
+            @RequestBody PetUpdateDTO dto,
+            @RequestHeader("Authorization") String authorizationHeader) {
+
+        try {
+            String token = authorizationHeader.startsWith("Bearer ") ?
+                    authorizationHeader.substring(7) : authorizationHeader;
+
+            UUID usuarioId = JwtUtil.extrairUsuarioId(token.trim());
+
+            Pet petAtualizado = petService.editarPet(petId, usuarioId, dto);
+            return ResponseEntity.ok(petAtualizado);
+
+        } catch (io.jsonwebtoken.JwtException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> removerPet(
+            @PathVariable("id") UUID petId,
+            @RequestHeader("Authorization") String authorizationHeader) {
+
+        try {
+            String token = authorizationHeader.startsWith("Bearer ") ?
+                    authorizationHeader.substring(7) : authorizationHeader;
+
+            UUID usuarioId = JwtUtil.extrairUsuarioId(token.trim());
+
+            petService.removerPet(petId, usuarioId);
+            return ResponseEntity.noContent().build();
+
+        } catch (io.jsonwebtoken.JwtException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Pet>> listarPets(@RequestHeader("Authorization") String token) {
+        String jwt = token.replace("Bearer ", "");
+        UUID usuarioId = JwtUtil.extrairUsuarioId(jwt);
+
+        List<Pet> pets = petService.listarPetsPorUsuario(usuarioId);
+        return ResponseEntity.ok(pets);
     }
 
 }

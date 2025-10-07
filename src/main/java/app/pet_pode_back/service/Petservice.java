@@ -1,5 +1,7 @@
 package app.pet_pode_back.service;
 
+import app.pet_pode_back.dto.PetUpdateDTO;
+import app.pet_pode_back.dto.UsuarioUpdateDTO;
 import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.PetRepository;
@@ -33,10 +35,42 @@ public class Petservice {
     }
 
 
+    public Pet editarPet(UUID usuarioId, UUID petId, PetUpdateDTO dto) {
+        Pet pet = petRepository.findById(petId)
+                .orElseThrow(() -> new RuntimeException("Pet não encontrado"));
 
-    public List<Pet> buscarPetsDoUsuarioPorNomeParcial(UUID usuarioId, String termo) {
-        return petRepository.findByUsuarioIdAndNomeContainingIgnoreCase(usuarioId, termo);
+        if (!pet.getUsuario().getId().equals(usuarioId)) {
+            throw new RuntimeException("Você não tem permissão para editar este pet.");
+        }
+
+        if (dto.getNome() != null) {
+            pet.setNome(dto.getNome());
+        }
+
+        if (dto.getEspecie() != null) {
+            pet.setEspecie(dto.getEspecie());
+        }
+
+
+        return petRepository.save(pet);
     }
+
+    public void removerPet(UUID petId, UUID usuarioId) {
+        Pet pet = petRepository.findById(petId)
+                .orElseThrow(() -> new RuntimeException("Pet não encontrado"));
+
+        if (!pet.getUsuario().getId().equals(usuarioId)) {
+            throw new RuntimeException("Você não tem permissão para editar este pet.");
+        }
+
+        petRepository.delete(pet);
+    }
+
+    public List<Pet> listarPetsPorUsuario(UUID usuarioId) {
+        return petRepository.findAllByUsuarioId(usuarioId);
+    }
+
+
 
 
 }

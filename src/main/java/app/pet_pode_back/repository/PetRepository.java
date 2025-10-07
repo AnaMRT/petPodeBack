@@ -10,5 +10,6 @@ import java.util.UUID;
 @Repository
 public interface PetRepository extends JpaRepository<Pet, UUID> {
 
-    List<Pet> findByUsuarioIdAndNomeContainingIgnoreCase(UUID usuarioId, String nome);
+    List<Pet> findAllByUsuarioId(UUID usuarioId);
+
 }
