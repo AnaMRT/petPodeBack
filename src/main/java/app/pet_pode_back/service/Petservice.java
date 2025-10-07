@@ -30,9 +30,7 @@ public class Petservice {
         return petRepository.save(pet);
     }
 
-    public List<Pet> listarTodos() {
-        return petRepository.findAll();
-    }
+
 
 
     public Pet editarPet(UUID usuarioId, UUID petId, PetUpdateDTO dto) {

@@ -26,11 +26,6 @@ public class PetController {
     private JwtUtil jwtUtil;
 
 
-    @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<List<Pet>> get() {
-        return ResponseEntity.status(HttpStatus.OK).body(petService.listarTodos());
-    }
-
     @PostMapping
     public ResponseEntity<Pet> cadastrarPet(@RequestBody Pet pet,
                                             @RequestHeader("Authorization") String token) {
