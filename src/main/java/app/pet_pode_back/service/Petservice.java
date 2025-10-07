@@ -10,8 +10,6 @@ import app.pet_pode_back.repository.PetRepository;
 import app.pet_pode_back.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 import java.util.List;
@@ -25,8 +23,6 @@ public class Petservice {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
-
-    private static final Logger logger = LoggerFactory.getLogger(Petservice.class);
 
 
     public Pet salvarPet(Pet pet, UUID usuarioId) {
@@ -73,12 +69,8 @@ public class Petservice {
 
 
     public List<Pet> listarPetsPorUsuario(UUID usuarioId) {
-        logger.info("Buscando pets para o usuário com id: {}", usuarioId);
-        List<Pet> pets = petRepository.findAllByUsuario_Id(usuarioId);
-        logger.info("Pets encontrados: {}", pets.size());
-        return pets;
+        return petRepository.findAllByUsuario_Id(usuarioId);
     }
-
 
 
 

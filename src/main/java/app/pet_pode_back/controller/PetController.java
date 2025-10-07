@@ -12,15 +12,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 
 import java.util.List;
 import java.util.UUID;
 
-@Controller
+@RestController
 @RequestMapping(path = "pet")
 public class PetController {
 
@@ -30,8 +27,13 @@ public class PetController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    private static final Logger logger = LoggerFactory.getLogger(PetController.class);
-
+    private UUID extrairUsuarioIdDoHeader(String authorizationHeader) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            throw new io.jsonwebtoken.JwtException("Token inválido");
+        }
+        String token = authorizationHeader.substring(7);
+        return JwtUtil.extrairUsuarioId(token);
+    }
 
     @PostMapping
     public ResponseEntity<Pet> cadastrarPet(@RequestBody Pet pet,
@@ -44,65 +46,51 @@ public class PetController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Pet> editarPet(
+    public ResponseEntity<?> editarPet(
             @PathVariable("id") UUID petId,
             @RequestBody PetUpdateDTO dto,
             @RequestHeader("Authorization") String authorizationHeader) {
 
         try {
-            String token = authorizationHeader.startsWith("Bearer ") ?
-                    authorizationHeader.substring(7) : authorizationHeader;
-
-            UUID usuarioId = JwtUtil.extrairUsuarioId(token.trim());
-
+            UUID usuarioId = extrairUsuarioIdDoHeader(authorizationHeader);
             Pet petAtualizado = petService.editarPet(usuarioId, petId, dto);
             return ResponseEntity.ok(petAtualizado);
 
         } catch (io.jsonwebtoken.JwtException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
+        } catch (PetNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (PermissionDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> removerPet(
+    public ResponseEntity<?> removerPet(
             @PathVariable("id") UUID petId,
             @RequestHeader("Authorization") String authorizationHeader) {
 
         try {
-            String token = authorizationHeader.startsWith("Bearer ") ?
-                    authorizationHeader.substring(7) : authorizationHeader;
-
-            UUID usuarioId = JwtUtil.extrairUsuarioId(token.trim());
-
+            UUID usuarioId = extrairUsuarioIdDoHeader(authorizationHeader);
             petService.removerPet(petId, usuarioId);
             return ResponseEntity.noContent().build();
 
         } catch (io.jsonwebtoken.JwtException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
         } catch (PetNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (PermissionDeniedException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
     }
 
-
     @GetMapping
     public ResponseEntity<List<Pet>> listarPets(@RequestHeader("Authorization") String token) {
-        String jwt = token.replace("Bearer ", "");
-        UUID usuarioId = JwtUtil.extrairUsuarioId(jwt);
-
-        logger.info("Token JWT recebido: {}", jwt);
-        logger.info("ID do usuário extraído do token: {}", usuarioId);
-
+        UUID usuarioId = extrairUsuarioIdDoHeader(token);
         List<Pet> pets = petService.listarPetsPorUsuario(usuarioId);
-
-        logger.info("Número de pets retornados para o usuário {}: {}", usuarioId, pets.size());
-
         return ResponseEntity.ok(pets);
     }
+
 
 }
 
