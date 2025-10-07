@@ -12,6 +12,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 
 import java.util.List;
@@ -26,6 +29,8 @@ public class PetController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    private static final Logger logger = LoggerFactory.getLogger(PetController.class);
 
 
     @PostMapping
@@ -89,7 +94,13 @@ public class PetController {
         String jwt = token.replace("Bearer ", "");
         UUID usuarioId = JwtUtil.extrairUsuarioId(jwt);
 
+        logger.info("Token JWT recebido: {}", jwt);
+        logger.info("ID do usuário extraído do token: {}", usuarioId);
+
         List<Pet> pets = petService.listarPetsPorUsuario(usuarioId);
+
+        logger.info("Número de pets retornados para o usuário {}: {}", usuarioId, pets.size());
+
         return ResponseEntity.ok(pets);
     }
 
