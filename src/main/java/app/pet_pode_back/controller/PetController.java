@@ -27,13 +27,6 @@ public class PetController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    private UUID extrairUsuarioIdDoHeader(String authorizationHeader) {
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            throw new io.jsonwebtoken.JwtException("Token inválido");
-        }
-        String token = authorizationHeader.substring(7);
-        return JwtUtil.extrairUsuarioId(token);
-    }
 
     @PostMapping
     public ResponseEntity<Pet> cadastrarPet(@RequestBody Pet pet,
@@ -45,53 +38,45 @@ public class PetController {
         return ResponseEntity.ok(novoPet);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<?> editarPet(
-            @PathVariable("id") UUID petId,
-            @RequestBody PetUpdateDTO dto,
-            @RequestHeader("Authorization") String authorizationHeader) {
 
+    @GetMapping
+    public ResponseEntity<List<Pet>> listarPetsDoUsuario(
+            @RequestHeader("Authorization") String authorizationHeader) {
         try {
-            UUID usuarioId = extrairUsuarioIdDoHeader(authorizationHeader);
-            Pet petAtualizado = petService.editarPet(usuarioId, petId, dto);
-            return ResponseEntity.ok(petAtualizado);
+            String token = authorizationHeader.replace("Bearer ", "").trim();
+            UUID usuarioId = JwtUtil.extrairUsuarioId(token);
+
+            List<Pet> pets = petService.listarPetsDoUsuario(usuarioId);
+            return ResponseEntity.ok(pets);
 
         } catch (io.jsonwebtoken.JwtException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
-        } catch (PetNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (PermissionDeniedException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (RuntimeException e) {
+            // Qualquer outra exceção, pode ser erro de usuário não encontrado
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> removerPet(
+    public ResponseEntity<Void> excluirPet(
             @PathVariable("id") UUID petId,
             @RequestHeader("Authorization") String authorizationHeader) {
 
         try {
-            UUID usuarioId = extrairUsuarioIdDoHeader(authorizationHeader);
-            petService.removerPet(petId, usuarioId);
+            String token = authorizationHeader.replace("Bearer ", "").trim();
+            UUID usuarioId = JwtUtil.extrairUsuarioId(token);
+
+            petService.excluirPetDoUsuario(usuarioId, petId);
             return ResponseEntity.noContent().build();
 
-        } catch (io.jsonwebtoken.JwtException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
         } catch (PetNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (PermissionDeniedException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (io.jsonwebtoken.JwtException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
-
-    @GetMapping
-    public ResponseEntity<List<Pet>> listarPets(@RequestHeader("Authorization") String token) {
-        UUID usuarioId = extrairUsuarioIdDoHeader(token);
-        List<Pet> pets = petService.listarPetsPorUsuario(usuarioId);
-        return ResponseEntity.ok(pets);
-    }
-
-
 }
 
 

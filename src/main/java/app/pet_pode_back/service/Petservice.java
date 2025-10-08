@@ -35,45 +35,22 @@ public class Petservice {
 
 
 
+    public List<Pet> listarPetsDoUsuario(UUID usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-    public Pet editarPet(UUID usuarioId, UUID petId, PetUpdateDTO dto) {
-        Pet pet = petRepository.findById(petId)
-                .orElseThrow(() -> new RuntimeException("Pet não encontrado"));
-
-        if (!pet.getUsuario().getId().equals(usuarioId)) {
-            throw new RuntimeException("Você não tem permissão para editar este pet.");
-        }
-
-        if (dto.getNome() != null) {
-            pet.setNome(dto.getNome());
-        }
-
-        if (dto.getEspecie() != null) {
-            pet.setEspecie(dto.getEspecie());
-        }
-
-
-        return petRepository.save(pet);
+        return usuario.getPets();
     }
 
-    public void removerPet(UUID petId, UUID usuarioId) {
+    public void excluirPetDoUsuario(UUID usuarioId, UUID petId) {
         Pet pet = petRepository.findById(petId)
                 .orElseThrow(() -> new PetNotFoundException("Pet não encontrado"));
 
         if (!pet.getUsuario().getId().equals(usuarioId)) {
-            throw new PermissionDeniedException("Você não tem permissão para editar este pet.");
+            throw new PermissionDeniedException("Você não tem permissão para excluir este pet.");
         }
 
         petRepository.delete(pet);
     }
-
-
-    public List<Pet> listarPetsPorUsuario(UUID usuarioId) {
-        return petRepository.findAllByUsuario_Id(usuarioId);
-    }
-
-
-
-
 
 }
