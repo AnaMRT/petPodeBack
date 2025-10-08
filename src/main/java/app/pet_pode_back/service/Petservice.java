@@ -35,12 +35,13 @@ public class Petservice {
 
 
 
-    public List<Pet> listarPetsDoUsuario(UUID usuarioId) {
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
-        return usuario.getPets();
+    public List<Pet> listarPetsPorUsuario(UUID usuarioId) {
+        System.out.println("Buscando pets para usuarioId: " + usuarioId);
+        List<Pet> pets = petRepository.findAllByUsuario_Id(usuarioId);
+        System.out.println("Pets encontrados: " + pets.size());
+        return pets;
     }
+
 
     public void excluirPetDoUsuario(UUID usuarioId, UUID petId) {
         Pet pet = petRepository.findById(petId)

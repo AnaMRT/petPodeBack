@@ -46,7 +46,7 @@ public class PetController {
             String token = authorizationHeader.replace("Bearer ", "").trim();
             UUID usuarioId = JwtUtil.extrairUsuarioId(token);
 
-            List<Pet> pets = petService.listarPetsDoUsuario(usuarioId);
+            List<Pet> pets = petService.listarPetsPorUsuario(usuarioId);
             return ResponseEntity.ok(pets);
 
         } catch (io.jsonwebtoken.JwtException e) {

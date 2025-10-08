@@ -14,5 +14,4 @@ public interface PetRepository extends JpaRepository<Pet, UUID> {
 
     List<Pet> findAllByUsuario_Id(UUID usuarioId);
 
-
 }
