@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.*;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
+
 
 import java.util.Collections;
 import java.util.UUID;
@@ -81,34 +83,22 @@ public class AuthController {
     @PostMapping("/google")
     public ResponseEntity<?> googleLogin(@RequestBody GoogleLoginRequest request) {
         try {
-            final NetHttpTransport transport = GoogleNetHttpTransport.newTrustedTransport();
-            final JacksonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+            Payload payload = googleTokenVerifierService.verify(request.getToken());
+            String email = payload.getEmail();
+            String name = (String) payload.get("name");
 
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(transport, jsonFactory)
-                    .setAudience(Collections.singletonList("COLE_SEU_CLIENT_ID_DO_GOOGLE_AQUI"))
-                    .build();
+            Usuario usuario = usuarioRepository.findByEmail(email).orElseGet(() -> {
+                Usuario novo = new Usuario();
+                novo.setEmail(email);
+                novo.setNome(name);
+                novo.setSenha(passwordEncoder.encode(UUID.randomUUID().toString()));
+                return usuarioRepository.save(novo);
+            });
 
-            GoogleIdToken idToken = verifier.verify(request.getToken());
-            if (idToken != null) {
-                GoogleIdToken.Payload payload = idToken.getPayload();
-                String email = payload.getEmail();
-                String name = (String) payload.get("name");
-
-                Usuario usuario = usuarioRepository.findByEmail(email).orElseGet(() -> {
-                    Usuario novo = new Usuario();
-                    novo.setEmail(email);
-                    novo.setNome(name);
-                    novo.setSenha(passwordEncoder.encode(UUID.randomUUID().toString()));
-                    return usuarioRepository.save(novo);
-                });
-
-                String jwt = jwtUtil.gerarToken(usuario.getId());
-                return ResponseEntity.ok(Collections.singletonMap("token", jwt));
-            } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
-            }
+            String jwt = jwtUtil.gerarToken(usuario.getId());
+            return ResponseEntity.ok(Collections.singletonMap("token", jwt));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao autenticar com Google");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido: " + e.getMessage());
         }
     }
 
