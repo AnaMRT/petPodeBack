@@ -39,20 +39,20 @@ public class PlantaService {
     public List<Plantas> buscarPlantas(String termo, Pet pet) {
         Set<Plantas> resultado = new HashSet<>();
 
-        // Busca por nome popular
+
         resultado.addAll(plantaRepository.findByNomePopularContainingIgnoreCase(termo));
 
-        // Busca por nome científico
+
         resultado.addAll(plantaRepository.findByNomeCientificoContainingIgnoreCase(termo));
 
-        // Busca por palavra-chave "CANINO" ou "FELINO"
+
         if ("CANINO".equalsIgnoreCase(termo)) {
             resultado.addAll(plantaRepository.findByToxicaParaCaninosTrue());
         } else if ("FELINO".equalsIgnoreCase(termo)) {
             resultado.addAll(plantaRepository.findByToxicaParaFelinosTrue());
         }
 
-        // Busca por nome do pet cadastrado
+
         if (pet != null && pet.getNome().equalsIgnoreCase(termo)) {
             if ("CANINO".equalsIgnoreCase(pet.getEspecie())) {
                 resultado.addAll(plantaRepository.findByToxicaParaCaninosTrue());
