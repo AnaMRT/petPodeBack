@@ -13,7 +13,7 @@ import java.util.Collections;
 @Service
 public class GoogleTokenVerifierService {
 
-    private static final String CLIENT_ID = "646686829695-2o9ac5dr080600585obhaats2j06u9qf.apps.googleusercontent.com"; // Não use o do Android, precisa ser o WEB client ID
+    private static final String CLIENT_ID = "646686829695-psiqebgq6ia23nrvahilgo422p6d08nb.apps.googleusercontent.com"; // Não use o do Android, precisa ser o WEB client ID
 
     public Payload verify(String idTokenString) throws Exception {
         GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
