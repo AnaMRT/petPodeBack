@@ -86,10 +86,13 @@ public class PetController {
             @RequestHeader("Authorization") String authorizationHeader) {
 
         try {
+
             String token = authorizationHeader.replace("Bearer ", "").trim();
             UUID usuarioId = JwtUtil.extrairUsuarioId(token);
 
+
             Pet petEditado = petService.editarPet(petId, usuarioId, dto);
+
             return ResponseEntity.ok(petEditado);
 
         } catch (PetNotFoundException e) {
