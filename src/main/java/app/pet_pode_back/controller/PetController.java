@@ -1,9 +1,11 @@
 package app.pet_pode_back.controller;
 
 import app.pet_pode_back.dto.PetUpdateDTO;
+import app.pet_pode_back.dto.UsuarioUpdateDTO;
 import app.pet_pode_back.exception.PermissionDeniedException;
 import app.pet_pode_back.exception.PetNotFoundException;
 import app.pet_pode_back.model.Pet;
+import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.security.JwtUtil;
 import app.pet_pode_back.service.Petservice;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +54,6 @@ public class PetController {
         } catch (io.jsonwebtoken.JwtException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         } catch (RuntimeException e) {
-            // Qualquer outra exceção, pode ser erro de usuário não encontrado
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
@@ -77,6 +78,29 @@ public class PetController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Pet> editarPet(
+            @PathVariable("id") UUID petId,
+            @RequestBody PetUpdateDTO dto,
+            @RequestHeader("Authorization") String authorizationHeader) {
+
+        try {
+            String token = authorizationHeader.replace("Bearer ", "").trim();
+            UUID usuarioId = JwtUtil.extrairUsuarioId(token);
+
+            Pet petEditado = petService.editarPet(petId, usuarioId, dto);
+            return ResponseEntity.ok(petEditado);
+
+        } catch (PetNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (PermissionDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (io.jsonwebtoken.JwtException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
 }
 
 

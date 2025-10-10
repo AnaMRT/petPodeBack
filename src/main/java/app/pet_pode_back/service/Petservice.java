@@ -54,4 +54,24 @@ public class Petservice {
         petRepository.delete(pet);
     }
 
+    public Pet editarPet(UUID petId, UUID usuarioId, PetUpdateDTO dto) {
+        Pet pet = petRepository.findById(petId)
+                .orElseThrow(() -> new PetNotFoundException("Pet não encontrado"));
+
+        if (!pet.getUsuario().getId().equals(usuarioId)) {
+            throw new PermissionDeniedException("Você não tem permissão para editar este pet.");
+        }
+
+        if (dto.getNome() != null) {
+            pet.setNome(dto.getNome());
+        }
+
+        if (dto.getEspecie() != null) {
+            pet.setEspecie(dto.getEspecie());
+        }
+
+
+        return petRepository.save(pet);
+    }
+
 }
