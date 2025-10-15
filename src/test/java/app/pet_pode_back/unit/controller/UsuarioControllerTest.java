@@ -1,4 +1,4 @@
-package app.pet_pode_back.controller;
+package app.pet_pode_back.unit.controller;
 
 import app.pet_pode_back.repository.UsuarioRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -22,7 +22,7 @@ public class PasswordResetToken {
     @Column(nullable = false)
     private boolean used = false;
 
-    // Getters e Setters
+
 
     public Long getId() {
         return id;
