@@ -1,38 +1,51 @@
 package app.pet_pode_back.service;
-//import com.sendgrid.*;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-//import java.io.IOException;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class EmailService {
 
-//    @Value("${sendgrid.api.key}")
-//    private String sendgridApiKey;
+    @Value("${sendgrid.api.key}")
+    private String sendgridApiKey;
 
-//   public void enviarEmail(String para, String assunto, String texto) {
-//        Email from = new Email("petpodeoficial@gmail.com");
-//        Email to = new Email(para);
-//        Content content = new Content("text/plain", texto);
-//        Mail mail = new Mail(from, assunto, to, content);
-//
-//        SendGrid sg = new SendGrid(sendgridApiKey);
-//        Request request = new Request();
-//
-//        try {
-//            request.setMethod(Method.POST);
-//            request.setEndpoint("mail/send");
-//            request.setBody(mail.build());
-//            Response response = sg.api(request);
-//
-//            System.out.println("STATUS: " + response.getStatusCode());
-//            System.out.println("BODY: " + response.getBody());
-//            System.out.println("HEADERS: " + response.getHeaders());
-//        } catch (IOException ex) {
-//            System.err.println("Erro ao enviar e-mail com SendGrid:");
-//            ex.printStackTrace();
-//        }
-//    }
+    public void enviarEmail(String para, String assunto, String texto) {
+        String url = "https://api.sendgrid.com/v3/mail/send";
+
+        // Montar o corpo do e-mail em formato JSON conforme a API do SendGrid
+        Map<String, Object> body = new HashMap<>();
+        body.put("personalizations", new Object[]{
+                Map.of("to", new Object[]{Map.of("email", para)})
+        });
+        body.put("from", Map.of("email", "petpodeoficial@gmail.com"));
+        body.put("subject", assunto);
+        body.put("content", new Object[]{
+                Map.of("type", "text/plain", "value", texto)
+        });
+
+        // Criar headers com autorização
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(sendgridApiKey);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+
+        // Enviar usando RestTemplate
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+
+            System.out.println("STATUS: " + response.getStatusCodeValue());
+            System.out.println("BODY: " + response.getBody());
+
+        } catch (Exception e) {
+            System.err.println("Erro ao enviar e-mail com SendGrid:");
+            e.printStackTrace();
+        }
+    }
 }

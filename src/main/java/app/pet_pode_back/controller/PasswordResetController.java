@@ -15,35 +15,26 @@ import java.util.UUID;
 @RequestMapping("/auth")
 public class PasswordResetController {
 
-//    @Autowired
-//    private UsuarioService usuarioService;
-//
-//    @Autowired
-//    private EmailService emailService;
-//
-//
-//    @Autowired
-//    private UsuarioRepository usuarioRepository;
-//
+    @Autowired
+    private UsuarioService usuarioService;
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestParam("email") String email) {
+        try {
+            usuarioService.solicitarRedefinicaoSenha(email);
+            return ResponseEntity.ok("Código de redefinição de senha enviado por e-mail.");
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+    }
 
-//    @PostMapping("/forgot-password")
-//    public ResponseEntity<String> forgotPassword(@RequestParam("email") String email) {
-//        try {
-//            usuarioService.solicitarRedefinicaoSenha(email);
-//            return ResponseEntity.ok("Código de redefinição de senha enviado por e-mail.");
-//        } catch (Exception e) {
-//            return ResponseEntity.status(400).body(e.getMessage());
-//        }
-//    }
-
-//    @PostMapping("/reset-password")
-//    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordDTO dto) {
-//        try {
-//            usuarioService.redefinirSenha(dto.getCodigo(), dto.getNovaSenha());
-//            return ResponseEntity.ok("Senha redefinida com sucesso.");
-//        } catch (Exception e) {
-//            return ResponseEntity.status(400).body(e.getMessage());
-//        }
-//    }
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordDTO dto) {
+        try {
+            usuarioService.redefinirSenha(dto.getCodigo(), dto.getNovaSenha());
+            return ResponseEntity.ok("Senha redefinida com sucesso.");
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+    }
 }
