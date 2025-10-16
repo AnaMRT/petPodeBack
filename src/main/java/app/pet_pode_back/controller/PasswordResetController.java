@@ -37,4 +37,5 @@ public class PasswordResetController {
             return ResponseEntity.status(400).body(e.getMessage());
         }
     }
+
 }
