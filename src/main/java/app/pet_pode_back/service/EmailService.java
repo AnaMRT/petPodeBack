@@ -3,17 +3,16 @@ package app.pet_pode_back.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
 //import java.io.IOException;
 
 
 @Service
 public class EmailService {
 
-    @Value("${sendgrid.api.key}")
-    private String sendgridApiKey;
+//    @Value("${sendgrid.api.key}")
+//    private String sendgridApiKey;
 
-  //  public void enviarEmail(String para, String assunto, String texto) {
+//   public void enviarEmail(String para, String assunto, String texto) {
 //        Email from = new Email("petpodeoficial@gmail.com");
 //        Email to = new Email(para);
 //        Content content = new Content("text/plain", texto);
@@ -35,5 +34,5 @@ public class EmailService {
 //            System.err.println("Erro ao enviar e-mail com SendGrid:");
 //            ex.printStackTrace();
 //        }
-   // }
+//    }
 }

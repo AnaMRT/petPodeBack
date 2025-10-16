@@ -1,6 +1,11 @@
 package app.pet_pode_back.controller;
 
+import app.pet_pode_back.dto.PetUpdateDTO;
 import app.pet_pode_back.dto.UsuarioUpdateDTO;
+import app.pet_pode_back.exception.PermissionDeniedException;
+import app.pet_pode_back.exception.PetNotFoundException;
+import app.pet_pode_back.exception.RegistroNaoEncontradoException;
+import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.security.JwtUtil;
 import app.pet_pode_back.service.UsuarioService;
@@ -42,36 +47,36 @@ public class UsuarioController {
             @RequestHeader("Authorization") String authorizationHeader) {
 
         try {
-            String token = authorizationHeader;
-            if (token.startsWith("Bearer ")) {
-                token = token.substring(7);
-            }
+            String token = authorizationHeader.replace("Bearer ", "").trim();
+            UUID usuarioId = JwtUtil.extrairUsuarioId(token);
 
-            UUID usuarioId = JwtUtil.extrairUsuarioId(token.trim());
             Usuario usuarioEditado = usuarioService.editarUsuario(usuarioId, dto);
-
             return ResponseEntity.ok(usuarioEditado);
 
+        } catch (RegistroNaoEncontradoException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (PermissionDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (io.jsonwebtoken.JwtException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
 
     @DeleteMapping
-    public ResponseEntity<Usuario> removerUsuario(
+    public ResponseEntity<Void> removerUsuario(
             @RequestHeader("Authorization") String authorizationHeader) {
 
         try {
-            String token = authorizationHeader;
-            if (token.startsWith("Bearer ")) {
-                token = token.substring(7);
-            }
+            String token = authorizationHeader.replace("Bearer ", "").trim();
+            UUID usuarioId = JwtUtil.extrairUsuarioId(token);
 
-            UUID usuarioId = JwtUtil.extrairUsuarioId(token.trim());
             usuarioService.remover(usuarioId);
-
             return ResponseEntity.noContent().build();
 
+        } catch (RegistroNaoEncontradoException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (PermissionDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (io.jsonwebtoken.JwtException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }

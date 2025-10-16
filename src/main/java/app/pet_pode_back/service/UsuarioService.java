@@ -80,49 +80,49 @@ public class UsuarioService {
 
 
 
-    public void solicitarRedefinicaoSenha(String email) {
-        Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+//    public void solicitarRedefinicaoSenha(String email) {
+//        Usuario usuario = usuarioRepository.findByEmail(email)
+//                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+//
+//        String codigo = String.format("%06d", new Random().nextInt(999999)); // Gera PIN de 6 dígitos
+//
+//        PasswordResetToken resetToken = new PasswordResetToken();
+//        resetToken.setCodigo(codigo);
+//        resetToken.setUsuario(usuario);
+//        resetToken.setExpirationDate(LocalDateTime.now().plusMinutes(10));
+//        resetToken.setUsed(false);
+//
+//        resetTokenRepository.save(resetToken);
+//
+//        String corpoEmail = "Seu código de verificação é: " + codigo + "\n" +
+//                "Este código expira em 10 minutos.";
+//
+//        emailService.enviarEmail(
+//                usuario.getEmail(),
+//                "Código de verificação para redefinir senha",
+//                corpoEmail
+//        );
+//    }
 
-        String codigo = String.format("%06d", new Random().nextInt(999999)); // Gera PIN de 6 dígitos
-
-        PasswordResetToken resetToken = new PasswordResetToken();
-        resetToken.setCodigo(codigo);
-        resetToken.setUsuario(usuario);
-        resetToken.setExpirationDate(LocalDateTime.now().plusMinutes(10));
-        resetToken.setUsed(false);
-
-        resetTokenRepository.save(resetToken);
-
-        String corpoEmail = "Seu código de verificação é: " + codigo + "\n" +
-                "Este código expira em 10 minutos.";
-
-        emailService.enviarEmail(
-                usuario.getEmail(),
-                "Código de verificação para redefinir senha",
-                corpoEmail
-        );
-    }
-
-    public void redefinirSenha(String codigo, String novaSenha) {
-        PasswordResetToken resetToken = resetTokenRepository.findByCodigo(codigo)
-                .orElseThrow(() -> new RuntimeException("Código inválido."));
-
-        if (resetToken.isUsed()) {
-            throw new RuntimeException("Código já foi utilizado.");
-        }
-
-        if (resetToken.getExpirationDate().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Código expirado.");
-        }
-
-        Usuario usuario = resetToken.getUsuario();
-        usuario.setSenha(passwordEncoder.encode(novaSenha));
-        usuarioRepository.save(usuario);
-
-        resetToken.setUsed(true);
-        resetTokenRepository.save(resetToken);
-    }
+//    public void redefinirSenha(String codigo, String novaSenha) {
+//        PasswordResetToken resetToken = resetTokenRepository.findByCodigo(codigo)
+//                .orElseThrow(() -> new RuntimeException("Código inválido."));
+//
+//        if (resetToken.isUsed()) {
+//            throw new RuntimeException("Código já foi utilizado.");
+//        }
+//
+//        if (resetToken.getExpirationDate().isBefore(LocalDateTime.now())) {
+//            throw new RuntimeException("Código expirado.");
+//        }
+//
+//        Usuario usuario = resetToken.getUsuario();
+//        usuario.setSenha(passwordEncoder.encode(novaSenha));
+//        usuarioRepository.save(usuario);
+//
+//        resetToken.setUsed(true);
+//        resetTokenRepository.save(resetToken);
+//    }
 
     public Usuario buscarUsuarioPorId(UUID usuarioId) {
         return usuarioRepository.findById(usuarioId)
