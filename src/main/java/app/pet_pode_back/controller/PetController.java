@@ -104,6 +104,30 @@ public class PetController {
         }
     }
 
+    @PutMapping("/{id}/imagem")
+    public ResponseEntity<Pet> atualizarImagemPet(
+            @PathVariable("id") UUID petId,
+            @RequestParam("imagemUrl") String imagemUrl,
+            @RequestHeader("Authorization") String authorizationHeader) {
+
+        try {
+            String token = authorizationHeader.replace("Bearer ", "").trim();
+            UUID usuarioId = JwtUtil.extrairUsuarioId(token);
+
+            Pet petAtualizado = petService.atualizarImagemPet(petId, usuarioId, imagemUrl);
+            return ResponseEntity.ok(petAtualizado);
+
+        } catch (PetNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (PermissionDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (io.jsonwebtoken.JwtException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 }
 
 

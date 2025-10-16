@@ -43,6 +43,11 @@ public class Usuario {
 
     private String resetToken;
 
+    @Column
+    private String imagemUrl;
+
+
+
     public Usuario() {
     }
 
@@ -97,6 +102,14 @@ public class Usuario {
 
     public String getResetToken() {
         return resetToken;
+    }
+
+    public String getImagemUrl() {
+        return imagemUrl;
+    }
+
+    public void setImagemUrl(String imagemUrl) {
+        this.imagemUrl = imagemUrl;
     }
 
     public void setResetToken(String resetToken) {

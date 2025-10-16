@@ -129,6 +129,14 @@ public class UsuarioService {
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
     }
 
+    public void atualizarImagemUsuario(UUID usuarioId, String imagemUrl) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        usuario.setImagemUrl(imagemUrl);
+        usuarioRepository.save(usuario);
+    }
+
 
 }
 

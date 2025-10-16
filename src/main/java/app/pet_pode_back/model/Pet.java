@@ -21,6 +21,8 @@ public class Pet {
     @Column
     private String especie;
 
+    @Column
+    private String imagemUrl;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
     @JsonBackReference
@@ -51,6 +53,14 @@ public class Pet {
 
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    public String getImagemUrl() {
+        return imagemUrl;
+    }
+
+    public void setImagemUrl(String imagemUrl) {
+        this.imagemUrl = imagemUrl;
     }
 
     public String getEspecie() {

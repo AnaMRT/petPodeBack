@@ -82,5 +82,23 @@ public class UsuarioController {
         }
     }
 
+    @PutMapping("/imagem")
+    public ResponseEntity<String> atualizarImagem(
+            @RequestParam("imagemUrl") String imagemUrl,
+            @RequestHeader("Authorization") String authorizationHeader) {
+
+        try {
+            String token = authorizationHeader.replace("Bearer ", "").trim();
+            UUID usuarioId = JwtUtil.extrairUsuarioId(token);
+
+            usuarioService.atualizarImagemUsuario(usuarioId, imagemUrl);
+            return ResponseEntity.ok("Imagem atualizada com sucesso!");
+        } catch (io.jsonwebtoken.JwtException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao atualizar imagem");
+        }
+    }
+
 
 }

@@ -74,4 +74,16 @@ public class Petservice {
         return petRepository.save(pet);
     }
 
+    public Pet atualizarImagemPet(UUID petId, UUID usuarioId, String imagemUrl) {
+        Pet pet = petRepository.findById(petId)
+                .orElseThrow(() -> new PetNotFoundException("Pet não encontrado"));
+
+        if (!pet.getUsuario().getId().equals(usuarioId)) {
+            throw new PermissionDeniedException("Você não tem permissão para atualizar este pet.");
+        }
+
+        pet.setImagemUrl(imagemUrl);
+        return petRepository.save(pet);
+    }
+
 }
