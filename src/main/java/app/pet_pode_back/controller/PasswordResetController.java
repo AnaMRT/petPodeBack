@@ -18,6 +18,9 @@ public class PasswordResetController {
     @Autowired
     private UsuarioService usuarioService;
 
+    @Autowired
+    private EmailService emailService;
+
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestParam("email") String email) {
         try {
@@ -36,6 +39,12 @@ public class PasswordResetController {
         } catch (Exception e) {
             return ResponseEntity.status(400).body(e.getMessage());
         }
+    }
+
+    @GetMapping("/teste-email")
+    public ResponseEntity<String> testarEmail() {
+        emailService.enviarEmail("seu-email@dominio.com", "Teste SendGrid", "Este é um teste enviado via API REST SendGrid");
+        return ResponseEntity.ok("Email enviado!");
     }
 
 }
