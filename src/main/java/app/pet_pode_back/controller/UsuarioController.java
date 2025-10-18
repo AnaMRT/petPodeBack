@@ -86,7 +86,6 @@ public class UsuarioController {
     public ResponseEntity<String> atualizarImagem(
             @RequestParam("imagemUrl") String imagemUrl,
             @RequestHeader("Authorization") String authorizationHeader) {
-
         try {
             String token = authorizationHeader.replace("Bearer ", "").trim();
             UUID usuarioId = JwtUtil.extrairUsuarioId(token);
@@ -99,6 +98,5 @@ public class UsuarioController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao atualizar imagem");
         }
     }
-
 
 }
