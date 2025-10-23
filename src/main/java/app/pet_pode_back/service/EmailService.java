@@ -17,7 +17,7 @@ public class EmailService {
     public void enviarEmail(String para, String assunto, String texto) {
         String url = "https://api.sendgrid.com/v3/mail/send";
 
-        // Montar o corpo do e-mail em formato JSON conforme a API do SendGrid
+
         Map<String, Object> body = new HashMap<>();
         body.put("personalizations", new Object[]{
                 Map.of("to", new Object[]{Map.of("email", para)})
@@ -28,14 +28,14 @@ public class EmailService {
                 Map.of("type", "text/plain", "value", texto)
         });
 
-        // Criar headers com autorização
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(sendgridApiKey);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-        // Enviar usando RestTemplate
+
         RestTemplate restTemplate = new RestTemplate();
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);

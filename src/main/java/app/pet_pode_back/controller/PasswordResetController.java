@@ -41,10 +41,4 @@ public class PasswordResetController {
         }
     }
 
-    @GetMapping("/teste-email")
-    public ResponseEntity<String> testarEmail() {
-        emailService.enviarEmail("rafaelaserpa05@gmail.com", "Teste SendGrid", "Este é um teste enviado via API REST SendGrid");
-        return ResponseEntity.ok("Email enviado!");
-    }
-
 }
