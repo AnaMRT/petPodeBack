@@ -119,7 +119,7 @@ public class PetController {
             String token = authorizationHeader.replace("Bearer ", "").trim();
             UUID usuarioId = JwtUtil.extrairUsuarioId(token);
 
-            // Valida se o arquivo é uma imagem
+
             if (file == null || file.isEmpty()) {
                 return ResponseEntity.badRequest().body("Arquivo de imagem não enviado");
             }
@@ -128,11 +128,11 @@ public class PetController {
                 return ResponseEntity.badRequest().body("Arquivo enviado não é uma imagem");
             }
 
-            if (file.getSize() > 5 * 1024 * 1024) { // limite 5MB
+            if (file.getSize() > 5 * 1024 * 1024) {
                 return ResponseEntity.badRequest().body("Arquivo muito grande. Máximo 5MB");
             }
 
-            // Faz upload para Cloudinary e atualiza URL no pet
+
             String imagemUrl = petService.atualizarImagemPet(petId, usuarioId, file);
 
             return ResponseEntity.ok(Map.of("imagemUrl", imagemUrl));

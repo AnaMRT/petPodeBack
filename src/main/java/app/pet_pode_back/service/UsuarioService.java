@@ -144,12 +144,11 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        // Remove imagem antiga se existir
+
         if (usuario.getImagemPublicId() != null) {
             cloudinary.uploader().destroy(usuario.getImagemPublicId(), ObjectUtils.emptyMap());
         }
 
-        // Upload da nova imagem
         Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
                 ObjectUtils.asMap(
                         "folder", "usuarios/" + usuarioId,
@@ -158,10 +157,10 @@ public class UsuarioService {
                 ));
 
         String imagemUrl = uploadResult.get("secure_url").toString();
-        String publicId = uploadResult.get("public_id").toString(); // usado para deletar depois
+        String publicId = uploadResult.get("public_id").toString();
 
         usuario.setImagemUrl(imagemUrl);
-        usuario.setImagemPublicId(publicId); // armazenar publicId para futuras exclusões
+        usuario.setImagemPublicId(publicId);
         usuarioRepository.save(usuario);
 
         return imagemUrl;

@@ -120,11 +120,11 @@ public class UsuarioController {
             @RequestHeader("Authorization") String authorizationHeader) {
 
         try {
-            // Extrai token do header
+
             String token = authorizationHeader.replace("Bearer ", "").trim();
             UUID usuarioId = JwtUtil.extrairUsuarioId(token);
 
-            // Valida se o arquivo é uma imagem
+
             if (file == null || file.isEmpty()) {
                 return ResponseEntity.badRequest().body("Arquivo de imagem não enviado");
             }
@@ -133,14 +133,14 @@ public class UsuarioController {
                 return ResponseEntity.badRequest().body("Arquivo enviado não é uma imagem");
             }
 
-            if (file.getSize() > 5 * 1024 * 1024) { // 5MB limite
+            if (file.getSize() > 5 * 1024 * 1024) {
                 return ResponseEntity.badRequest().body("Arquivo muito grande. Máximo 5MB");
             }
 
-            // Atualiza imagem do usuário no serviço (upload no Cloudinary)
+
             String imagemUrl = usuarioService.atualizarImagemUsuario(usuarioId, file);
 
-            // Retorna URL da imagem salva
+
             return ResponseEntity.ok(Map.of("imagemUrl", imagemUrl));
 
         } catch (io.jsonwebtoken.JwtException e) {
@@ -150,11 +150,9 @@ public class UsuarioController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erro ao fazer upload da imagem: " + e.getMessage());
         } catch (RuntimeException e) {
-            // Pode ser erro no banco, usuário não encontrado, etc
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erro ao atualizar imagem do usuário: " + e.getMessage());
         } catch (Exception e) {
-            // Para qualquer outro erro inesperado
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erro inesperado: " + e.getMessage());
         }
@@ -163,11 +161,9 @@ public class UsuarioController {
     @GetMapping("/logado")
     public ResponseEntity<?> getUsuarioLogado(@RequestHeader("Authorization") String authorizationHeader) {
         try {
-            // Extrai token do header
             String token = authorizationHeader.replace("Bearer ", "").trim();
             UUID usuarioId = JwtUtil.extrairUsuarioId(token);
 
-            // Busca usuário pelo ID
             Usuario usuario = usuarioService.buscarUsuarioPorId(usuarioId);
 
             if (usuario == null) {
@@ -175,13 +171,12 @@ public class UsuarioController {
                         .body("Usuário não encontrado");
             }
 
-            // Retorna apenas os dados necessários (pode criar DTO se quiser)
             Map<String, Object> usuarioMap = Map.of(
                     "id", usuario.getId(),
                     "nome", usuario.getNome(),
                     "email", usuario.getEmail(),
                     "senha", usuario.getSenha(),
-                    "imagemUrl", usuario.getImagemUrl() // aqui a URL do Cloudinary
+                    "imagemUrl", usuario.getImagemUrl()
             );
 
             return ResponseEntity.ok(usuarioMap);
