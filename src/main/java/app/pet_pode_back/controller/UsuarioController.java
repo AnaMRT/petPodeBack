@@ -40,10 +40,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
-// Se você tiver algum serviço para atualizar o usuário
 import app.pet_pode_back.service.UsuarioService;
 
-// Se você tiver um utilitário JWT
 
 import java.util.List;
 import java.util.UUID;
@@ -188,6 +186,28 @@ public class UsuarioController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erro ao buscar usuário: " + e.getMessage());
         }
+    }
+
+    @PutMapping("/{id}/favoritar")
+    public ResponseEntity<Usuario> favoritarPlanta(
+            @PathVariable UUID id,
+            @RequestHeader("Authorization") String authorizationHeader) {
+
+        String token = authorizationHeader.replace("Bearer ", "").trim();
+        UUID usuarioId = JwtUtil.extrairUsuarioId(token);
+        Usuario usuario = usuarioService.favoritarPlanta(usuarioId, id);
+        return ResponseEntity.ok(usuario);
+    }
+
+    @DeleteMapping("/{id}/favoritar")
+    public ResponseEntity<Usuario> removerFavorito(
+            @PathVariable UUID id,
+            @RequestHeader("Authorization") String authorizationHeader) {
+
+        String token = authorizationHeader.replace("Bearer ", "").trim();
+        UUID usuarioId = JwtUtil.extrairUsuarioId(token);
+        Usuario usuario = usuarioService.removerFavorito(usuarioId, id);
+        return ResponseEntity.ok(usuario);
     }
 
 

@@ -5,12 +5,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
-
 
 @Entity
 @Table(name = "usuario")
@@ -20,7 +20,6 @@ public class Usuario {
     @GeneratedValue
     @Column
     private UUID id;
-
 
     @NotBlank(message = "Nome nao pode ser nulo")
     @Column
@@ -35,7 +34,6 @@ public class Usuario {
     @JsonManagedReference
     private List<Pet> pets;
 
-  // @Size(min = 5, max = 10, message = "senha não pode ter mais que 10 caracteres e menos de 5")
     @NotBlank(message = "Senha nao pode ser nula")
     @Column
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
@@ -46,9 +44,28 @@ public class Usuario {
     @Column
     private String imagemUrl;
 
-
     @Column(name = "imagem_public_id")
     private String imagemPublicId;
+
+    @ManyToMany
+    @JoinTable(
+            name = "usuario_favoritos",
+            joinColumns = @JoinColumn(name = "usuario_id"),
+            inverseJoinColumns = @JoinColumn(name = "planta_id")
+    )
+    private Set<Plantas> favoritos = new HashSet<>();
+
+    public Set<Plantas> getFavoritos() {
+        return favoritos;
+    }
+
+    public void addFavorito(Plantas planta) {
+        this.favoritos.add(planta);
+    }
+
+    public void removeFavorito(Plantas planta) {
+        this.favoritos.remove(planta);
+    }
 
 
     public Usuario() {
@@ -91,14 +108,6 @@ public class Usuario {
         return email;
     }
 
-    public String getImagemPublicId() {
-        return imagemPublicId;
-    }
-
-    public void setImagemPublicId(String imagemPublicId) {
-        this.imagemPublicId = imagemPublicId;
-    }
-
     public void setEmail(String email) {
         this.email = email;
     }
@@ -115,6 +124,10 @@ public class Usuario {
         return resetToken;
     }
 
+    public void setResetToken(String resetToken) {
+        this.resetToken = resetToken;
+    }
+
     public String getImagemUrl() {
         return imagemUrl;
     }
@@ -123,19 +136,23 @@ public class Usuario {
         this.imagemUrl = imagemUrl;
     }
 
-    public void setResetToken(String resetToken) {
-        this.resetToken = resetToken;
+    public String getImagemPublicId() {
+        return imagemPublicId;
+    }
+
+    public void setImagemPublicId(String imagemPublicId) {
+        this.imagemPublicId = imagemPublicId;
     }
 
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Usuario usuario = (Usuario) o;
-        return Objects.equals(id, usuario.id) && Objects.equals(nome, usuario.nome) && Objects.equals(email, usuario.email) && Objects.equals(pets, usuario.pets) && Objects.equals(senha, usuario.senha) && Objects.equals(resetToken, usuario.resetToken);
+        return Objects.equals(id, usuario.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, nome, email, pets, senha, resetToken);
+        return Objects.hash(id);
     }
 }
