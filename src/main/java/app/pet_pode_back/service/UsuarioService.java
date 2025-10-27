@@ -6,6 +6,7 @@ import app.pet_pode_back.repository.PasswordResetTokenRepository;
 import app.pet_pode_back.repository.UsuarioRepository;
 
 import app.pet_pode_back.model.PasswordResetToken;
+import com.cloudinary.Cloudinary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,15 @@ import java.time.LocalDateTime;
 import java.util.Random;
 import java.util.UUID;
 import jakarta.validation.Valid;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.util.Map;
+import java.util.UUID;
+
 
 import java.util.List;
 
@@ -21,7 +31,8 @@ import java.util.List;
 public class UsuarioService {
 
 
-
+    @Autowired
+    private Cloudinary cloudinary;
 
     @Autowired
     private PasswordResetTokenRepository resetTokenRepository;
@@ -129,15 +140,32 @@ public class UsuarioService {
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
     }
 
-    public void atualizarImagemUsuario(UUID usuarioId, String imagemUrl) {
+    public String atualizarImagemUsuario(UUID usuarioId, MultipartFile file) throws IOException {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
+        // Remove imagem antiga se existir
+        if (usuario.getImagemPublicId() != null) {
+            cloudinary.uploader().destroy(usuario.getImagemPublicId(), ObjectUtils.emptyMap());
+        }
+
+        // Upload da nova imagem
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
+                ObjectUtils.asMap(
+                        "folder", "usuarios/" + usuarioId,
+                        "overwrite", true,
+                        "resource_type", "image"
+                ));
+
+        String imagemUrl = uploadResult.get("secure_url").toString();
+        String publicId = uploadResult.get("public_id").toString(); // usado para deletar depois
+
         usuario.setImagemUrl(imagemUrl);
+        usuario.setImagemPublicId(publicId); // armazenar publicId para futuras exclusões
         usuarioRepository.save(usuario);
+
+        return imagemUrl;
     }
-
-
 }
 
 

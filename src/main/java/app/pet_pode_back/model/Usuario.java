@@ -47,6 +47,9 @@ public class Usuario {
     private String imagemUrl;
 
 
+    @Column(name = "imagem_public_id")
+    private String imagemPublicId;
+
 
     public Usuario() {
     }
@@ -86,6 +89,14 @@ public class Usuario {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getImagemPublicId() {
+        return imagemPublicId;
+    }
+
+    public void setImagemPublicId(String imagemPublicId) {
+        this.imagemPublicId = imagemPublicId;
     }
 
     public void setEmail(String email) {

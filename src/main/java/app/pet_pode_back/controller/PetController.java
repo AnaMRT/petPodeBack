@@ -14,8 +14,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 
 
+import java.io.IOException;
+import java.util.Map;
 import java.util.List;
 import java.util.UUID;
 
@@ -105,28 +110,48 @@ public class PetController {
     }
 
     @PutMapping("/{id}/imagem")
-    public ResponseEntity<Pet> atualizarImagemPet(
+    public ResponseEntity<?> atualizarImagemPet(
             @PathVariable("id") UUID petId,
-            @RequestParam("imagemUrl") String imagemUrl,
+            @RequestParam("file") MultipartFile file,
             @RequestHeader("Authorization") String authorizationHeader) {
 
         try {
             String token = authorizationHeader.replace("Bearer ", "").trim();
             UUID usuarioId = JwtUtil.extrairUsuarioId(token);
 
-            Pet petAtualizado = petService.atualizarImagemPet(petId, usuarioId, imagemUrl);
-            return ResponseEntity.ok(petAtualizado);
+            // Valida se o arquivo é uma imagem
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.badRequest().body("Arquivo de imagem não enviado");
+            }
+
+            if (!file.getContentType().startsWith("image/")) {
+                return ResponseEntity.badRequest().body("Arquivo enviado não é uma imagem");
+            }
+
+            if (file.getSize() > 5 * 1024 * 1024) { // limite 5MB
+                return ResponseEntity.badRequest().body("Arquivo muito grande. Máximo 5MB");
+            }
+
+            // Faz upload para Cloudinary e atualiza URL no pet
+            String imagemUrl = petService.atualizarImagemPet(petId, usuarioId, file);
+
+            return ResponseEntity.ok(Map.of("imagemUrl", imagemUrl));
 
         } catch (PetNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (PermissionDeniedException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (io.jsonwebtoken.JwtException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido ou expirado");
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro ao fazer upload da imagem: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro inesperado: " + e.getMessage());
         }
     }
+
 }
 
 

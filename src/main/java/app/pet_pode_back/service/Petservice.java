@@ -10,13 +10,20 @@ import app.pet_pode_back.repository.PetRepository;
 import app.pet_pode_back.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import java.util.Map;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
 public class Petservice {
+
+    @Autowired
+    private Cloudinary cloudinary;
 
     @Autowired
     private PetRepository petRepository;
@@ -74,7 +81,7 @@ public class Petservice {
         return petRepository.save(pet);
     }
 
-    public Pet atualizarImagemPet(UUID petId, UUID usuarioId, String imagemUrl) {
+    public String atualizarImagemPet(UUID petId, UUID usuarioId, MultipartFile file) throws IOException {
         Pet pet = petRepository.findById(petId)
                 .orElseThrow(() -> new PetNotFoundException("Pet não encontrado"));
 
@@ -82,7 +89,14 @@ public class Petservice {
             throw new PermissionDeniedException("Você não tem permissão para atualizar este pet.");
         }
 
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
+                ObjectUtils.asMap("folder", "pets"));
+        String imagemUrl = uploadResult.get("secure_url").toString();
+
         pet.setImagemUrl(imagemUrl);
-        return petRepository.save(pet);
+        petRepository.save(pet);
+
+        return imagemUrl;
     }
+
 }
