@@ -170,25 +170,7 @@ public class UsuarioService {
         return imagemUrl;
     }
 
-    public Usuario favoritarPlanta(UUID usuarioId, UUID plantaId) {
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-        Plantas planta = plantaRepository.findById(plantaId)
-                .orElseThrow(() -> new RuntimeException("Planta não encontrada"));
 
-        usuario.addFavorito(planta);
-        return usuarioRepository.save(usuario);
-    }
-
-    public Usuario removerFavorito(UUID usuarioId, UUID plantaId) {
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-        Plantas planta = plantaRepository.findById(plantaId)
-                .orElseThrow(() -> new RuntimeException("Planta não encontrada"));
-
-        usuario.removeFavorito(planta);
-        return usuarioRepository.save(usuario);
-    }
 
 }
 

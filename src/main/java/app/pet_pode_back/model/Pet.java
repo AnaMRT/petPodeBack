@@ -23,6 +23,10 @@ public class Pet {
 
     @Column
     private String imagemUrl;
+
+    @Column(name = "imagem_public_id")
+    private String imagemPublicId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
     @JsonBackReference
@@ -46,13 +50,20 @@ public class Pet {
         this.id = id;
     }
 
-
     public String getNome() {
         return nome;
     }
 
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    public String getEspecie() {
+        return especie;
+    }
+
+    public void setEspecie(String especie) {
+        this.especie = especie;
     }
 
     public String getImagemUrl() {
@@ -63,12 +74,12 @@ public class Pet {
         this.imagemUrl = imagemUrl;
     }
 
-    public String getEspecie() {
-        return especie;
+    public String getImagemPublicId() {
+        return imagemPublicId;
     }
 
-    public void setEspecie(String especie) {
-        this.especie = especie;
+    public void setImagemPublicId(String imagemPublicId) {
+        this.imagemPublicId = imagemPublicId;
     }
 
     public Usuario getUsuario() {

@@ -19,4 +19,7 @@ public interface PlantaRepository extends JpaRepository<Plantas, UUID> {
     List<Plantas> findByNomeCientificoContainingIgnoreCase(String nomeCientifico);
     List<Plantas> findByToxicaParaCaninosTrue();
     List<Plantas> findByToxicaParaFelinosTrue();
+
+
+
 }

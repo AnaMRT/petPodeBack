@@ -188,27 +188,5 @@ public class UsuarioController {
         }
     }
 
-    @PutMapping("/{id}/favoritar")
-    public ResponseEntity<Usuario> favoritarPlanta(
-            @PathVariable UUID id,
-            @RequestHeader("Authorization") String authorizationHeader) {
-
-        String token = authorizationHeader.replace("Bearer ", "").trim();
-        UUID usuarioId = JwtUtil.extrairUsuarioId(token);
-        Usuario usuario = usuarioService.favoritarPlanta(usuarioId, id);
-        return ResponseEntity.ok(usuario);
-    }
-
-    @DeleteMapping("/{id}/favoritar")
-    public ResponseEntity<Usuario> removerFavorito(
-            @PathVariable UUID id,
-            @RequestHeader("Authorization") String authorizationHeader) {
-
-        String token = authorizationHeader.replace("Bearer ", "").trim();
-        UUID usuarioId = JwtUtil.extrairUsuarioId(token);
-        Usuario usuario = usuarioService.removerFavorito(usuarioId, id);
-        return ResponseEntity.ok(usuario);
-    }
-
 
 }

@@ -89,11 +89,23 @@ public class Petservice {
             throw new PermissionDeniedException("Você não tem permissão para atualizar este pet.");
         }
 
+        // Apagar imagem anterior se existir
+        if (pet.getImagemPublicId() != null) {
+            cloudinary.uploader().destroy(pet.getImagemPublicId(), ObjectUtils.emptyMap());
+        }
+
         Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
-                ObjectUtils.asMap("folder", "pets"));
+                ObjectUtils.asMap(
+                        "folder", "pets/" + petId,
+                        "overwrite", true,
+                        "resource_type", "image"
+                ));
+
         String imagemUrl = uploadResult.get("secure_url").toString();
+        String publicId = uploadResult.get("public_id").toString();
 
         pet.setImagemUrl(imagemUrl);
+        pet.setImagemPublicId(publicId);
         petRepository.save(pet);
 
         return imagemUrl;
