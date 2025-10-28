@@ -4,6 +4,7 @@ import app.pet_pode_back.model.Plantas;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.PlantaRepository;
 import app.pet_pode_back.repository.UsuarioRepository;
+import app.pet_pode_back.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -20,14 +21,21 @@ public class FavoritoController {
     private UsuarioRepository usuarioRepo;
 
     @Autowired
+    private JwtUtil jwtUtil;
+
+
+    @Autowired
     private PlantaRepository plantaRepo;
 
     @PutMapping("/{plantaId}")
     public ResponseEntity<?> adicionarFavorito(
             @PathVariable UUID plantaId,
-            Authentication authentication) {
+            @RequestHeader("Authorization") String authorizationHeader) {
 
-        Usuario usuario = usuarioRepo.findByEmail(authentication.getName())
+        String token = authorizationHeader.replace("Bearer ", "").trim();
+        UUID usuarioId = JwtUtil.extrairUsuarioId(token);
+
+        Usuario usuario = usuarioRepo.findById(usuarioId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         Plantas planta = plantaRepo.findById(plantaId)
@@ -42,9 +50,12 @@ public class FavoritoController {
     @DeleteMapping("/{plantaId}")
     public ResponseEntity<?> removerFavorito(
             @PathVariable UUID plantaId,
-            Authentication authentication) {
+            @RequestHeader("Authorization") String authorizationHeader) {
 
-        Usuario usuario = usuarioRepo.findByEmail(authentication.getName())
+        String token = authorizationHeader.replace("Bearer ", "").trim();
+        UUID usuarioId = JwtUtil.extrairUsuarioId(token);
+
+        Usuario usuario = usuarioRepo.findById(usuarioId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         Plantas planta = plantaRepo.findById(plantaId)
@@ -57,10 +68,16 @@ public class FavoritoController {
     }
 
     @GetMapping
-    public ResponseEntity<Set<Plantas>> listarFavoritos(Authentication authentication) {
-        Usuario usuario = usuarioRepo.findByEmail(authentication.getName())
+    public ResponseEntity<Set<Plantas>> listarFavoritos(
+            @RequestHeader("Authorization") String authorizationHeader) {
+
+        String token = authorizationHeader.replace("Bearer ", "").trim();
+        UUID usuarioId = JwtUtil.extrairUsuarioId(token);
+
+        Usuario usuario = usuarioRepo.findById(usuarioId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         return ResponseEntity.ok(usuario.getFavoritos());
     }
+
 }
