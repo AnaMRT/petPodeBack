@@ -115,6 +115,7 @@ public class PetController {
             @RequestParam("file") MultipartFile file,
             @RequestHeader("Authorization") String authorizationHeader) {
 
+
         try {
             String token = authorizationHeader.replace("Bearer ", "").trim();
             UUID usuarioId = JwtUtil.extrairUsuarioId(token);
