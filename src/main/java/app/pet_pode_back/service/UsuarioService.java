@@ -87,11 +87,10 @@ public class UsuarioService {
 
 
 
-   public void remover(UUID usuarioId) {
+    public void remover(UUID usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        // 1️⃣ Apaga foto do usuário no Cloudinary
         if (usuario.getImagemPublicId() != null) {
             try {
                 cloudinary.uploader().destroy(usuario.getImagemPublicId(), ObjectUtils.emptyMap());
@@ -100,7 +99,6 @@ public class UsuarioService {
             }
         }
 
-        // 2️⃣ Apaga fotos dos pets no Cloudinary
         if (usuario.getPets() != null) {
             for (Pet pet : usuario.getPets()) {
                 if (pet.getImagemPublicId() != null) {
@@ -110,12 +108,28 @@ public class UsuarioService {
                         System.err.println("Erro ao deletar imagem do pet " + pet.getNome() + ": " + e.getMessage());
                     }
                 }
+
+                try {
+                    cloudinary.api().deleteFolder("pets/" + pet.getId(), ObjectUtils.emptyMap());
+                } catch (Exception ignored) {}
             }
         }
 
-        // 3️⃣ Deleta o usuário (com orphanRemoval = true, os pets serão removidos do banco automaticamente)
         usuarioRepository.delete(usuario);
+
+        try {
+            cloudinary.api().deleteFolder("usuarios/" + usuarioId, ObjectUtils.emptyMap());
+        } catch (Exception e) {
+            System.out.println("Pasta do usuário não pôde ser removida (ainda contém arquivos): " + e.getMessage());
+        }
+
+        try {
+            cloudinary.api().deleteFolder("pets/" + usuarioId, ObjectUtils.emptyMap());
+        } catch (Exception e) {
+            System.out.println("Pasta de pets do usuário não está vazia: " + e.getMessage());
+        }
     }
+
 
     public void solicitarRedefinicaoSenha(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)

@@ -58,7 +58,6 @@ public class Petservice {
             throw new PermissionDeniedException("Você não tem permissão para excluir este pet.");
         }
 
-        // Remove imagem
         if (pet.getImagemPublicId() != null) {
             try {
                 cloudinary.uploader().destroy(pet.getImagemPublicId(), ObjectUtils.emptyMap());
@@ -69,7 +68,6 @@ public class Petservice {
 
         petRepository.delete(pet);
 
-        // ✅ Após excluir o pet: tenta remover a pasta
         try {
             cloudinary.api().deleteFolder("pets/" + petId, ObjectUtils.emptyMap());
         } catch (Exception e) {
@@ -107,7 +105,6 @@ public class Petservice {
             throw new PermissionDeniedException("Você não tem permissão para atualizar este pet.");
         }
 
-        // Apagar imagem anterior se existir
         if (pet.getImagemPublicId() != null) {
             cloudinary.uploader().destroy(pet.getImagemPublicId(), ObjectUtils.emptyMap());
         }
