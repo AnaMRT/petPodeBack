@@ -92,7 +92,8 @@ public class UsuarioController {
         }
     }
 
-    @DeleteMapping
+
+   @DeleteMapping
     public ResponseEntity<Void> removerUsuario(
             @RequestHeader("Authorization") String authorizationHeader) {
 

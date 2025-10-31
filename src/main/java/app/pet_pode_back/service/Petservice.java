@@ -58,8 +58,26 @@ public class Petservice {
             throw new PermissionDeniedException("Você não tem permissão para excluir este pet.");
         }
 
+        // Remove imagem
+        if (pet.getImagemPublicId() != null) {
+            try {
+                cloudinary.uploader().destroy(pet.getImagemPublicId(), ObjectUtils.emptyMap());
+            } catch (Exception e) {
+                System.out.println("Erro ao remover imagem do Cloudinary: " + e.getMessage());
+            }
+        }
+
         petRepository.delete(pet);
+
+        // ✅ Após excluir o pet: tenta remover a pasta
+        try {
+            cloudinary.api().deleteFolder("pets/" + petId, ObjectUtils.emptyMap());
+        } catch (Exception e) {
+            System.out.println("Pasta ainda não está vazia ou não pode ser deletada: " + e.getMessage());
+        }
     }
+
+
 
     public Pet editarPet(UUID petId, UUID usuarioId, PetUpdateDTO dto) {
         Pet pet = petRepository.findById(petId)

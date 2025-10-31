@@ -30,9 +30,10 @@ public class Usuario {
     @Email
     private String email;
 
-    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Pet> pets;
+
 
     @NotBlank(message = "Senha nao pode ser nula")
     @Column

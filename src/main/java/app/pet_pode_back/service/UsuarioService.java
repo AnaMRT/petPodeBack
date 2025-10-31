@@ -1,6 +1,7 @@
 package app.pet_pode_back.service;
 
 import app.pet_pode_back.dto.UsuarioUpdateDTO;
+import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.model.Plantas;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.PasswordResetTokenRepository;
@@ -84,15 +85,37 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
-    public void remover(UUID usuarioId) {
+
+
+   public void remover(UUID usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-         usuarioRepository.delete(usuario);
+        // 1️⃣ Apaga foto do usuário no Cloudinary
+        if (usuario.getImagemPublicId() != null) {
+            try {
+                cloudinary.uploader().destroy(usuario.getImagemPublicId(), ObjectUtils.emptyMap());
+            } catch (Exception e) {
+                System.err.println("Erro ao deletar imagem do usuário: " + e.getMessage());
+            }
+        }
+
+        // 2️⃣ Apaga fotos dos pets no Cloudinary
+        if (usuario.getPets() != null) {
+            for (Pet pet : usuario.getPets()) {
+                if (pet.getImagemPublicId() != null) {
+                    try {
+                        cloudinary.uploader().destroy(pet.getImagemPublicId(), ObjectUtils.emptyMap());
+                    } catch (Exception e) {
+                        System.err.println("Erro ao deletar imagem do pet " + pet.getNome() + ": " + e.getMessage());
+                    }
+                }
+            }
+        }
+
+        // 3️⃣ Deleta o usuário (com orphanRemoval = true, os pets serão removidos do banco automaticamente)
+        usuarioRepository.delete(usuario);
     }
-
-
-
 
     public void solicitarRedefinicaoSenha(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
