@@ -7,8 +7,11 @@ import app.pet_pode_back.exception.PetNotFoundException;
 import app.pet_pode_back.exception.RegistroNaoEncontradoException;
 import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.model.Usuario;
+import app.pet_pode_back.repository.UsuarioRepository;
 import app.pet_pode_back.security.JwtUtil;
 import app.pet_pode_back.service.UsuarioService;
+import io.jsonwebtoken.JwtException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,35 +40,38 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import app.pet_pode_back.service.UsuarioService;
 
 
-import java.util.List;
 import java.util.UUID;
+
+import static com.cloudinary.AccessControlRule.AccessType.token;
 
 @Controller
 @RequestMapping(path = "usuario")
 public class UsuarioController {
 
-     @Autowired
+    @Autowired
     private UsuarioService usuarioService;
 
-     @Autowired
-     private JwtUtil jwtUtil;
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Autowired
     private Cloudinary cloudinary;
 
 
-    @GetMapping(produces = { MediaType.APPLICATION_JSON_VALUE })
+    @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<List<Usuario>> get() {
         return ResponseEntity.status(HttpStatus.OK).body(usuarioService.listarTodos());
     }
 
-    @PostMapping( consumes = MediaType.APPLICATION_JSON_VALUE,
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Usuario> adicionar(@RequestBody @Valid Usuario usuario) {
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.cadastrar(usuario));
@@ -93,7 +99,7 @@ public class UsuarioController {
     }
 
 
-   @DeleteMapping
+    @DeleteMapping
     public ResponseEntity<Void> removerUsuario(
             @RequestHeader("Authorization") String authorizationHeader) {
 
@@ -158,36 +164,54 @@ public class UsuarioController {
     }
 
     @GetMapping("/logado")
-    public ResponseEntity<?> getUsuarioLogado(@RequestHeader("Authorization") String authorizationHeader) {
+    public ResponseEntity<?> getUsuarioLogado(HttpServletRequest request) {
+        System.out.println("=== [GET /usuario/logado] Buscando usuário logado ===");
+
+        String authHeader = request.getHeader("Authorization");
+        System.out.println("Header Authorization recebido: " + authHeader);
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            System.out.println(" Token não enviado ou formato incorreto");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Token não enviado ou inválido");
+        }
+
+        String token = authHeader.replace("Bearer ", "").trim();
+        System.out.println("Token extraído: " + token);
+
         try {
-            String token = authorizationHeader.replace("Bearer ", "").trim();
             UUID usuarioId = JwtUtil.extrairUsuarioId(token);
+            System.out.println(" UUID extraído do token: " + usuarioId);
 
-            Usuario usuario = usuarioService.buscarUsuarioPorId(usuarioId);
+            Optional<Usuario> usuarioOpt = usuarioRepository.findById(usuarioId);
 
-            if (usuario == null) {
+            if (usuarioOpt.isEmpty()) {
+                System.out.println(" UUID do token não encontrado no banco: " + usuarioId);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("Usuário não encontrado");
             }
 
-            Map<String, Object> usuarioMap = Map.of(
-                    "id", usuario.getId(),
-                    "nome", usuario.getNome(),
-                    "email", usuario.getEmail(),
-                    "senha", usuario.getSenha(),
-                    "imagemUrl", usuario.getImagemUrl()
-            );
+            Usuario usuario = usuarioOpt.get();
+            System.out.println("✅ Usuário encontrado: " + usuario.getNome() + " (" + usuario.getEmail() + ")");
 
+            Map<String, Object> usuarioMap = new HashMap<>();
+            usuarioMap.put("id", usuario.getId());
+            usuarioMap.put("nome", usuario.getNome());
+            usuarioMap.put("email", usuario.getEmail());
+            usuarioMap.put("imagemUrl", usuario.getImagemUrl());
+
+            System.out.println("Retornando dados do usuário logado");
             return ResponseEntity.ok(usuarioMap);
 
         } catch (io.jsonwebtoken.JwtException e) {
+            System.out.println(" Erro ao validar token: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Token inválido ou expirado");
         } catch (Exception e) {
+            System.out.println(" Erro inesperado ao processar token: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro ao buscar usuário: " + e.getMessage());
+                    .body("Erro inesperado");
         }
     }
-
-
 }

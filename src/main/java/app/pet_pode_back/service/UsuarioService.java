@@ -58,7 +58,6 @@ public class UsuarioService {
     public Usuario cadastrar(@Valid Usuario usuario) {
         String senhaCriptografada = passwordEncoder.encode(usuario.getSenha());
         usuario.setSenha(senhaCriptografada);
-      //  verificarEmailExistente(usuario);
         return usuarioRepository.save(usuario);
     }
 
