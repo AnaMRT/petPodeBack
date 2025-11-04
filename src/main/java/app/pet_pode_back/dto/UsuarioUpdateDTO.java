@@ -1,58 +1,36 @@
 package app.pet_pode_back.dto;
 
-import java.util.Objects;
-
-
 public class UsuarioUpdateDTO {
 
     private String nome;
-
     private String email;
-
     private String senha;
+    private String confirmarSenha;
+    private String senhaAtual;
 
     public UsuarioUpdateDTO() {
     }
 
-    public UsuarioUpdateDTO(String nome, String email, String senha) {
+    public UsuarioUpdateDTO(String nome, String email, String senha, String confirmarSenha, String senhaAtual) {
         this.nome = nome;
         this.email = email;
         this.senha = senha;
+        this.confirmarSenha = confirmarSenha;
+        this.senhaAtual = senhaAtual;
     }
 
-    public String getNome() {
-        return nome;
-    }
+    public String getNome() { return nome; }
+    public void setNome(String nome) { this.nome = nome; }
 
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public String getEmail() {
-        return email;
-    }
+    public String getSenha() { return senha; }
+    public void setSenha(String senha) { this.senha = senha; }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public String getConfirmarSenha() { return confirmarSenha; }
+    public void setConfirmarSenha(String confirmarSenha) { this.confirmarSenha = confirmarSenha; }
 
-    public String getSenha() {
-        return senha;
-    }
-
-    public void setSenha(String senha) {
-        this.senha = senha;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        UsuarioUpdateDTO that = (UsuarioUpdateDTO) o;
-        return Objects.equals(nome, that.nome) && Objects.equals(email, that.email) && Objects.equals(senha, that.senha);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(nome, email, senha);
-    }
+    public String getSenhaAtual() { return senhaAtual; }
+    public void setSenhaAtual(String senhaAtual) { this.senhaAtual = senhaAtual; }
 }

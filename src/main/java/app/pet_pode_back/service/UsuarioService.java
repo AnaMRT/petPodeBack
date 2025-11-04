@@ -11,6 +11,7 @@ import app.pet_pode_back.repository.UsuarioRepository;
 import app.pet_pode_back.model.PasswordResetToken;
 import com.cloudinary.Cloudinary;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,8 @@ import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
@@ -50,11 +53,6 @@ public class UsuarioService {
 
 
 
-    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
-        this.usuarioRepository = usuarioRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
-
     public Usuario cadastrar(@Valid Usuario usuario) {
         String senhaCriptografada = passwordEncoder.encode(usuario.getSenha());
         usuario.setSenha(senhaCriptografada);
@@ -66,25 +64,56 @@ public class UsuarioService {
     }
 
     public Usuario editarUsuario(UUID usuarioId, UsuarioUpdateDTO dto) {
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        if (dto.getNome() != null) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+
+
+        if (dto.getNome() != null && !dto.getNome().isBlank()) {
             usuario.setNome(dto.getNome());
         }
 
-        if (dto.getEmail() != null) {
+        if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
             usuario.setEmail(dto.getEmail());
         }
 
-        if (dto.getSenha() != null && !dto.getSenha().isEmpty()) {
+        if (dto.getSenhaAtual() != null && !dto.getSenhaAtual().isBlank()
+                && (dto.getSenha() == null || dto.getSenha().isBlank()
+                || dto.getConfirmarSenha() == null || dto.getConfirmarSenha().isBlank())) {
+
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Para alterar a senha, informe nova senha e confirmação.");
+        }
+
+        if (dto.getSenha() != null && !dto.getSenha().isBlank()) {
+
+            if (dto.getSenhaAtual() == null || dto.getSenhaAtual().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Para alterar a senha você deve informar a senha atual.");
+            }
+
+            if (dto.getConfirmarSenha() == null || dto.getConfirmarSenha().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Confirme a nova senha.");
+            }
+
+            if (!dto.getSenha().equals(dto.getConfirmarSenha())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Nova senha e confirmação não são iguais.");
+            }
+
+            boolean senhaMatch = passwordEncoder.matches(dto.getSenhaAtual(), usuario.getSenha());
+
+            if (!senhaMatch) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Senha atual incorreta.");
+            }
+
             usuario.setSenha(passwordEncoder.encode(dto.getSenha()));
         }
 
         return usuarioRepository.save(usuario);
     }
-
-
 
     public void remover(UUID usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
