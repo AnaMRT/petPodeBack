@@ -1,6 +1,8 @@
 package app.pet_pode_back.service;
 
 import app.pet_pode_back.dto.UsuarioUpdateDTO;
+import app.pet_pode_back.exception.ParametroInvalidoException;
+import app.pet_pode_back.exception.RegistroNaoEncontradoException;
 import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.model.Plantas;
 import app.pet_pode_back.model.Usuario;
@@ -66,8 +68,7 @@ public class UsuarioService {
     public Usuario editarUsuario(UUID usuarioId, UsuarioUpdateDTO dto) {
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
-
+                .orElseThrow(() -> new RegistroNaoEncontradoException("Usuário não encontrado"));
 
         if (dto.getNome() != null && !dto.getNome().isBlank()) {
             usuario.setNome(dto.getNome());
@@ -77,36 +78,30 @@ public class UsuarioService {
             usuario.setEmail(dto.getEmail());
         }
 
-        if (dto.getSenhaAtual() != null && !dto.getSenhaAtual().isBlank()
-                && (dto.getSenha() == null || dto.getSenha().isBlank()
-                || dto.getConfirmarSenha() == null || dto.getConfirmarSenha().isBlank())) {
+        if (dto.getSenhaAtual() != null && !dto.getSenhaAtual().isBlank() &&
+                (dto.getSenha() == null || dto.getSenha().isBlank() ||
+                        dto.getConfirmarSenha() == null || dto.getConfirmarSenha().isBlank())) {
 
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Para alterar a senha, informe nova senha e confirmação.");
+            throw new ParametroInvalidoException("Para alterar a senha, informe nova senha e confirmação.");
         }
 
         if (dto.getSenha() != null && !dto.getSenha().isBlank()) {
 
             if (dto.getSenhaAtual() == null || dto.getSenhaAtual().isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Para alterar a senha você deve informar a senha atual.");
+                throw new ParametroInvalidoException("Para alterar a senha você deve informar a senha atual.");
             }
 
             if (dto.getConfirmarSenha() == null || dto.getConfirmarSenha().isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Confirme a nova senha.");
+                throw new ParametroInvalidoException("Confirme a nova senha.");
             }
 
             if (!dto.getSenha().equals(dto.getConfirmarSenha())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Nova senha e confirmação não são iguais.");
+                throw new ParametroInvalidoException("Nova senha e confirmação não são iguais.");
             }
 
             boolean senhaMatch = passwordEncoder.matches(dto.getSenhaAtual(), usuario.getSenha());
-
             if (!senhaMatch) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Senha atual incorreta.");
+                throw new ParametroInvalidoException("Senha atual incorreta.");
             }
 
             usuario.setSenha(passwordEncoder.encode(dto.getSenha()));
@@ -114,6 +109,7 @@ public class UsuarioService {
 
         return usuarioRepository.save(usuario);
     }
+
 
     public void remover(UUID usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
