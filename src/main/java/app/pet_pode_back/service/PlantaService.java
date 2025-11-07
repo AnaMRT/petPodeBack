@@ -8,6 +8,7 @@ import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.PetRepository;
 import app.pet_pode_back.repository.PlantaRepository;
 import app.pet_pode_back.repository.UsuarioRepository;
+import app.pet_pode_back.util.StringUtils;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -39,31 +40,51 @@ public class PlantaService {
     public List<Plantas> buscarPlantas(String termo, Pet pet) {
         Set<Plantas> resultado = new HashSet<>();
 
+        String termoNormalizado = StringUtils.normalize(termo);
 
         resultado.addAll(plantaRepository.findByNomePopularContainingIgnoreCase(termo));
-
-
         resultado.addAll(plantaRepository.findByNomeCientificoContainingIgnoreCase(termo));
 
+        if (termoNormalizado.contains("canin") ||
+                termoNormalizado.contains("cao") ||
+                termoNormalizado.contains("cachorr")) {
 
-        if ("CANINO".equalsIgnoreCase(termo)) {
             resultado.addAll(plantaRepository.findByToxicaParaCaninosTrue());
-        } else if ("FELINO".equalsIgnoreCase(termo)) {
+        }
+
+        else if (termoNormalizado.contains("felin") ||
+                termoNormalizado.contains("gato")) {
+
             resultado.addAll(plantaRepository.findByToxicaParaFelinosTrue());
         }
 
 
-        if (pet != null && pet.getNome().equalsIgnoreCase(termo)) {
-            if ("CANINO".equalsIgnoreCase(pet.getEspecie())) {
-                resultado.addAll(plantaRepository.findByToxicaParaCaninosTrue());
-            } else if ("FELINO".equalsIgnoreCase(pet.getEspecie())) {
-                resultado.addAll(plantaRepository.findByToxicaParaFelinosTrue());
+        List<Plantas> todas = plantaRepository.findAll();
+
+        for (Plantas planta : todas) {
+            String nomePopular = StringUtils.normalize(planta.getNomePopular());
+            String nomeCientifico = StringUtils.normalize(planta.getNomeCientifico());
+
+            if (nomePopular.contains(termoNormalizado) || nomeCientifico.contains(termoNormalizado)) {
+                resultado.add(planta);
+            }
+        }
+
+        if (pet != null && pet.getNome() != null && pet.getEspecie() != null) {
+            String nomePetNormalizado = StringUtils.normalize(pet.getNome());
+            String especiePet = pet.getEspecie().toUpperCase();
+
+            if (termoNormalizado.contains(nomePetNormalizado)) {
+                if (especiePet.contains("CANINO")) {
+                    resultado.addAll(plantaRepository.findByToxicaParaCaninosTrue());
+                } else if (especiePet.contains("FELINO")) {
+                    resultado.addAll(plantaRepository.findByToxicaParaFelinosTrue());
+                }
             }
         }
 
         return new ArrayList<>(resultado);
     }
-
 
     public void remover(UUID id) {
         Optional<Plantas> busca = plantaRepository.findById(id);
