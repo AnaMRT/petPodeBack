@@ -1,83 +1,38 @@
 package app.pet_pode_back.controller;
 
 import app.pet_pode_back.model.Plantas;
-import app.pet_pode_back.model.Usuario;
-import app.pet_pode_back.repository.PlantaRepository;
-import app.pet_pode_back.repository.UsuarioRepository;
-import app.pet_pode_back.security.JwtUtil;
+import app.pet_pode_back.service.UsuarioService;
+import app.pet_pode_back.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.Set;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/favoritos")
 public class FavoritoController {
-
     @Autowired
-    private UsuarioRepository usuarioRepo;
-
+    private UsuarioService usuarioService;
     @Autowired
     private JwtUtil jwtUtil;
-
-
-    @Autowired
-    private PlantaRepository plantaRepo;
-
     @PutMapping("/{plantaId}")
-    public ResponseEntity<?> adicionarFavorito(
-            @PathVariable UUID plantaId,
-            @RequestHeader("Authorization") String authorizationHeader) {
-
-        String token = authorizationHeader.replace("Bearer ", "").trim();
-        UUID usuarioId = JwtUtil.extrairUsuarioId(token);
-
-        Usuario usuario = usuarioRepo.findById(usuarioId)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
-        Plantas planta = plantaRepo.findById(plantaId)
-                .orElseThrow(() -> new RuntimeException("Planta não encontrada"));
-
-        usuario.addFavorito(planta);
-        usuarioRepo.save(usuario);
-
+    public ResponseEntity<Void> adicionar(@PathVariable UUID plantaId,
+                                          @RequestHeader("Authorization") String token) {
+        UUID usuarioId = jwtUtil.extrairUsuarioId(token.replace("Bearer ", "").trim());
+        usuarioService.adicionarFavorito(usuarioId, plantaId);
         return ResponseEntity.ok().build();
     }
-
     @DeleteMapping("/{plantaId}")
-    public ResponseEntity<?> removerFavorito(
-            @PathVariable UUID plantaId,
-            @RequestHeader("Authorization") String authorizationHeader) {
-
-        String token = authorizationHeader.replace("Bearer ", "").trim();
-        UUID usuarioId = JwtUtil.extrairUsuarioId(token);
-
-        Usuario usuario = usuarioRepo.findById(usuarioId)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
-        Plantas planta = plantaRepo.findById(plantaId)
-                .orElseThrow(() -> new RuntimeException("Planta não encontrada"));
-
-        usuario.removeFavorito(planta);
-        usuarioRepo.save(usuario);
-
+    public ResponseEntity<Void> remover(@PathVariable UUID plantaId,
+                                        @RequestHeader("Authorization") String token) {
+        UUID usuarioId = jwtUtil.extrairUsuarioId(token.replace("Bearer ", "").trim());
+        usuarioService.removerFavorito(usuarioId, plantaId);
         return ResponseEntity.ok().build();
     }
-
     @GetMapping
-    public ResponseEntity<Set<Plantas>> listarFavoritos(
-            @RequestHeader("Authorization") String authorizationHeader) {
-
-        String token = authorizationHeader.replace("Bearer ", "").trim();
-        UUID usuarioId = JwtUtil.extrairUsuarioId(token);
-
-        Usuario usuario = usuarioRepo.findById(usuarioId)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
-        return ResponseEntity.ok(usuario.getFavoritos());
+    public ResponseEntity<Set<Plantas>> listar(@RequestHeader("Authorization") String token) {
+        UUID usuarioId = jwtUtil.extrairUsuarioId(token.replace("Bearer ", "").trim());
+        return ResponseEntity.ok(usuarioService.listarFavoritos(usuarioId));
     }
-
 }

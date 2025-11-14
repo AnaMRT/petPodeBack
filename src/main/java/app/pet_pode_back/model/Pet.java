@@ -2,6 +2,7 @@ package app.pet_pode_back.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -9,37 +10,31 @@ import java.util.UUID;
 @Entity
 @Table(name = "pet")
 public class Pet {
-
     @Id
     @GeneratedValue
     @Column
     private UUID id;
-
     @Column
+    @Size(max = 100, message = "O nome deve ter ate 100 caracteres")
     private String nome;
-
     @Column
     private String especie;
-
     @Column
     private String imagemUrl;
-
     @Column(name = "imagem_public_id")
     private String imagemPublicId;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
     @JsonBackReference
     private Usuario usuario;
 
+    public Pet() {
+    }
     public Pet(UUID id, String nome, String especie, Usuario usuario) {
         this.id = id;
         this.nome = nome;
         this.especie = especie;
         this.usuario = usuario;
-    }
-
-    public Pet() {
     }
 
     public UUID getId() {
@@ -92,13 +87,14 @@ public class Pet {
 
     @Override
     public boolean equals(Object o) {
+        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Pet pet = (Pet) o;
-        return Objects.equals(id, pet.id) && Objects.equals(nome, pet.nome) && Objects.equals(especie, pet.especie) && Objects.equals(usuario, pet.usuario);
+        return Objects.equals(id, pet.id) && Objects.equals(nome, pet.nome) && Objects.equals(especie, pet.especie) && Objects.equals(imagemUrl, pet.imagemUrl) && Objects.equals(imagemPublicId, pet.imagemPublicId) && Objects.equals(usuario, pet.usuario);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, nome, especie, usuario);
+        return Objects.hash(id, nome, especie, imagemUrl, imagemPublicId, usuario);
     }
 }

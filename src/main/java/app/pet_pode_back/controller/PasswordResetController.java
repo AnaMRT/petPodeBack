@@ -1,26 +1,19 @@
 package app.pet_pode_back.controller;
 
 import app.pet_pode_back.dto.ResetPasswordDTO;
-import app.pet_pode_back.model.Usuario;
-import app.pet_pode_back.repository.UsuarioRepository;
 import app.pet_pode_back.service.EmailService;
 import app.pet_pode_back.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
-
 @RestController
 @RequestMapping("/auth")
 public class PasswordResetController {
-
     @Autowired
     private UsuarioService usuarioService;
-
     @Autowired
     private EmailService emailService;
-
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestParam("email") String email) {
         try {
@@ -30,7 +23,6 @@ public class PasswordResetController {
             return ResponseEntity.status(400).body(e.getMessage());
         }
     }
-
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordDTO dto) {
         try {
@@ -40,5 +32,4 @@ public class PasswordResetController {
             return ResponseEntity.status(400).body(e.getMessage());
         }
     }
-
 }

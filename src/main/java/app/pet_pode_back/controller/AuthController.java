@@ -1,17 +1,10 @@
 package app.pet_pode_back.controller;
 
-import app.pet_pode_back.dto.GoogleLoginRequest;
 import app.pet_pode_back.dto.LoginRequest;
 import app.pet_pode_back.exception.RegistroNaoEncontradoException;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.UsuarioRepository;
-import app.pet_pode_back.security.JwtUtil;
-import app.pet_pode_back.service.GoogleTokenVerifierService;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import app.pet_pode_back.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,26 +13,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.*;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
-
-
 import java.util.Collections;
-import java.util.UUID;
 
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
-
     @Autowired
     private UsuarioRepository usuarioRepository;
-
     @Autowired
     private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private GoogleTokenVerifierService googleTokenVerifierService;
-
     @Autowired
     private JwtUtil jwtUtil;
 
@@ -56,7 +39,6 @@ public class AuthController {
 
         return ResponseEntity.ok(Collections.singletonMap("token", token));
     }
-
     @PostMapping("/cadastro")
     public ResponseEntity<?> register(@RequestBody Usuario novoUsuario) {
 
@@ -65,41 +47,13 @@ public class AuthController {
                     .body("Erro: Email já cadastrado");
         }
 
-
         String senhaCriptografada = passwordEncoder.encode(novoUsuario.getSenha());
         novoUsuario.setSenha(senhaCriptografada);
 
-
         Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
-
 
         String token = jwtUtil.gerarToken(usuarioSalvo.getId());
 
-
         return ResponseEntity.ok(Collections.singletonMap("token", token));
     }
-
-
-    @PostMapping("/google")
-    public ResponseEntity<?> googleLogin(@RequestBody GoogleLoginRequest request) {
-        try {
-            Payload payload = googleTokenVerifierService.verify(request.getToken());
-            String email = payload.getEmail();
-            String name = (String) payload.get("name");
-
-            Usuario usuario = usuarioRepository.findByEmail(email).orElseGet(() -> {
-                Usuario novo = new Usuario();
-                novo.setEmail(email);
-                novo.setNome(name);
-                novo.setSenha(passwordEncoder.encode(UUID.randomUUID().toString()));
-                return usuarioRepository.save(novo);
-            });
-
-            String jwt = jwtUtil.gerarToken(usuario.getId());
-            return ResponseEntity.ok(Collections.singletonMap("token", jwt));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido: " + e.getMessage());
-        }
-    }
-
 }
