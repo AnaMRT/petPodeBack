@@ -42,6 +42,34 @@ public class Plantas {
         this.id = id;
     }
 
+    public void setNomePopular(String nomePopular) {
+        this.nomePopular = nomePopular;
+    }
+
+    public void setNomeCientifico(String nomeCientifico) {
+        this.nomeCientifico = nomeCientifico;
+    }
+
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
+    }
+
+    public void setToxicaParaCaninos(Boolean toxicaParaCaninos) {
+        this.toxicaParaCaninos = toxicaParaCaninos;
+    }
+
+    public void setToxicaParaFelinos(Boolean toxicaParaFelinos) {
+        this.toxicaParaFelinos = toxicaParaFelinos;
+    }
+
+    public void setImagemUrl(String imagemUrl) {
+        this.imagemUrl = imagemUrl;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
     public String getNomePopular() {
         return nomePopular;
     }
@@ -77,6 +105,7 @@ public class Plantas {
         Plantas plantas = (Plantas) o;
         return Objects.equals(nomePopular, plantas.nomePopular) && Objects.equals(nomeCientifico, plantas.nomeCientifico) && Objects.equals(descricao, plantas.descricao) && Objects.equals(toxicaParaCaninos, plantas.toxicaParaCaninos) && Objects.equals(toxicaParaFelinos, plantas.toxicaParaFelinos) && Objects.equals(imagemUrl, plantas.imagemUrl) && Objects.equals(id, plantas.id);
     }
+
     @Override
     public int hashCode() {
         return Objects.hash(nomePopular, nomeCientifico, descricao, toxicaParaCaninos, toxicaParaFelinos, imagemUrl, id);

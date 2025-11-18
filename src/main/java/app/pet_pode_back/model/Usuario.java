@@ -21,11 +21,9 @@ public class Usuario {
     @Column
     private UUID id;
     @NotBlank(message = "Nome nao pode ser nulo")
-    //@Size(max = 100, message = "O nome deve ter ate 100 caracteres")
     @Column
     private String nome;
     @NotBlank(message = "Email nao pode ser nulo")
-   // @Size(min = 6, max = 30, message = "O e-mail deve ter entre 6 e 30 caracteres")
     @Column(unique = true, nullable = false)
     @Email
     private String email;
@@ -33,7 +31,6 @@ public class Usuario {
     @JsonManagedReference
     private List<Pet> pets;
     @NotBlank(message = "Senha nao pode ser nula")
-   // @Size(min = 6, max = 10, message = "A senha deve ter entre 6 e 10 caracteres")
     @Column
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String senha;
@@ -69,6 +66,11 @@ public class Usuario {
         this.senha = senha;
         this.resetToken = resetToken;
     }
+
+    public void setFavoritos(Set<Plantas> favoritos) {
+        this.favoritos = favoritos;
+    }
+
     public UUID getId() {
         return id;
     }

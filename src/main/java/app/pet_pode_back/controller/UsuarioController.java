@@ -1,6 +1,7 @@
 package app.pet_pode_back.controller;
 
 import app.pet_pode_back.dto.UsuarioUpdateDTO;
+import app.pet_pode_back.exception.SemPermissaoException;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.UsuarioRepository;
 import app.pet_pode_back.util.JwtUtil;
@@ -21,7 +22,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.UUID;
 
-@Controller
+@RestController
 @RequestMapping(path = "usuario")
 public class UsuarioController {
     @Autowired
@@ -36,12 +37,6 @@ public class UsuarioController {
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<List<Usuario>> get() {
         return ResponseEntity.status(HttpStatus.OK).body(usuarioService.listarTodos());
-    }
-    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Usuario> cadastrar(@RequestBody @Valid Usuario usuario) {
-        Usuario salvo = usuarioService.cadastrar(usuario);
-        return ResponseEntity.status(HttpStatus.CREATED).body(salvo);
     }
     @PutMapping
     public ResponseEntity<Usuario> editar(
@@ -80,7 +75,11 @@ public class UsuarioController {
         return ResponseEntity.ok(usuario);
     }
     private UUID extrairId(String tokenHeader) {
-        String tokenLimpo = tokenHeader.replace("Bearer ", "").trim();
-        return jwtUtil.extrairUsuarioId(tokenLimpo);
+        try {
+            String tokenLimpo = tokenHeader.replace("Bearer ", "").trim();
+            return jwtUtil.extrairUsuarioId(tokenLimpo);
+        } catch (IllegalArgumentException e) {
+            throw new SemPermissaoException("Token inválido ou expirado");
+        }
     }
 }

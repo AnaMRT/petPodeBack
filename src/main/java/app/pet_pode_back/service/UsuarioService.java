@@ -27,23 +27,12 @@ public class UsuarioService {
     @Autowired
     private Cloudinary cloudinary;
     @Autowired
-    private PlantaRepository plantaRepository;
-    @Autowired
-    private PasswordResetTokenRepository resetTokenRepository;
-    @Autowired
-    private EmailService emailService;
-    @Autowired
     private UsuarioRepository usuarioRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
     private JwtUtil jwtUtil;
 
-    public Usuario cadastrar(@Valid Usuario usuario) {
-        String senhaCriptografada = passwordEncoder.encode(usuario.getSenha());
-        usuario.setSenha(senhaCriptografada);
-        return usuarioRepository.save(usuario);
-    }
     public List<Usuario> listarTodos() {
         return usuarioRepository.findAll();
     }
@@ -62,29 +51,6 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
-    public String atualizarImagemUsuario(UUID usuarioId, MultipartFile file) throws IOException {
-        Usuario usuario = buscarUsuarioPorId(usuarioId);
-
-        if (usuario.getImagemPublicId() != null) {
-            cloudinary.uploader().destroy(usuario.getImagemPublicId(), ObjectUtils.emptyMap());
-        }
-
-        Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
-                ObjectUtils.asMap(
-                        "folder", "usuarios/" + usuarioId,
-                        "overwrite", true,
-                        "resource_type", "image"
-                ));
-
-        String imagemUrl = uploadResult.get("secure_url").toString();
-        String publicId = uploadResult.get("public_id").toString();
-
-        usuario.setImagemUrl(imagemUrl);
-        usuario.setImagemPublicId(publicId);
-        usuarioRepository.save(usuario);
-
-        return imagemUrl;
-    }
     private void tratarAtualizacaoDeSenha(Usuario usuario, UsuarioUpdateDTO dto) {
         boolean informouSenhaAtual = dto.getSenhaAtual() != null && !dto.getSenhaAtual().isBlank();
         boolean informouNovaSenha = dto.getSenha() != null && !dto.getSenha().isBlank();
@@ -111,81 +77,33 @@ public class UsuarioService {
             usuario.setSenha(passwordEncoder.encode(dto.getSenha()));
         }
     }
-    public void solicitarRedefinicaoSenha(String email) {
-        Usuario usuario = buscarUsuarioPorEmail(email);
 
-        String codigo = String.format("%06d", new Random().nextInt(999999));
+    public String atualizarImagemUsuario(UUID usuarioId, MultipartFile file) throws IOException {
+        Usuario usuario = buscarUsuarioPorId(usuarioId);
 
-        PasswordResetToken resetToken = new PasswordResetToken();
-        resetToken.setCodigo(codigo);
-        resetToken.setUsuario(usuario);
-        resetToken.setExpirationDate(LocalDateTime.now().plusMinutes(10));
-        resetToken.setUsed(false);
-
-        resetTokenRepository.save(resetToken);
-
-        String corpoEmail = "Seu código de verificação é: " + codigo + "\n" +
-                "Este código expira em 10 minutos.";
-
-        emailService.enviarEmail(
-                usuario.getEmail(),
-                "Código de verificação para redefinir senha",
-                corpoEmail
-        );
-    }
-    public void redefinirSenha(String codigo, String novaSenha) {
-        PasswordResetToken resetToken = resetTokenRepository.findByCodigo(codigo)
-                .orElseThrow(() -> new RuntimeException("Código inválido."));
-
-        if (resetToken.isUsed()) {
-            throw new RuntimeException("Código já foi utilizado.");
+        if (usuario.getImagemPublicId() != null) {
+            cloudinary.uploader().destroy(usuario.getImagemPublicId(), ObjectUtils.emptyMap());
         }
 
-        if (resetToken.getExpirationDate().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Código expirado.");
-        }
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
+                ObjectUtils.asMap(
+                        "folder", "usuarios/" + usuarioId,
+                        "overwrite", true,
+                        "resource_type", "image"
+                ));
 
-        Usuario usuario = resetToken.getUsuario();
-        usuario.setSenha(passwordEncoder.encode(novaSenha));
+        String imagemUrl = uploadResult.get("secure_url").toString();
+        String publicId = uploadResult.get("public_id").toString();
+
+        usuario.setImagemUrl(imagemUrl);
+        usuario.setImagemPublicId(publicId);
         usuarioRepository.save(usuario);
 
-        resetToken.setUsed(true);
-        resetTokenRepository.save(resetToken);
+        return imagemUrl;
     }
-    public void adicionarFavorito(UUID usuarioId, UUID plantaId) {
-        Usuario usuario = buscarUsuarioPorId(usuarioId);
-        Plantas planta = plantaRepository.findById(plantaId)
-                .orElseThrow(() -> new RegistroNaoEncontradoException("Planta não encontrada"));
 
-        usuario.addFavorito(planta);
-        usuarioRepository.save(usuario);
-    }
-    public void removerFavorito(UUID usuarioId, UUID plantaId) {
-        Usuario usuario = buscarUsuarioPorId(usuarioId);
-        Plantas planta = plantaRepository.findById(plantaId)
-                .orElseThrow(() -> new RegistroNaoEncontradoException("Planta não encontrada"));
 
-        usuario.removeFavorito(planta);
-        usuarioRepository.save(usuario);
-    }
-    public Set<Plantas> listarFavoritos(UUID usuarioId) {
-        Usuario usuario = buscarUsuarioPorId(usuarioId);
-        return usuario.getFavoritos();
-    }
-    public Map<String, Object> getUsuarioLogado(String token) {
 
-        UUID usuarioId = jwtUtil.extrairUsuarioId(token);
-
-        Usuario usuario = buscarUsuarioPorId(usuarioId);
-
-        Map<String, Object> usuarioMap = new HashMap<>();
-        usuarioMap.put("id", usuario.getId());
-        usuarioMap.put("nome", usuario.getNome());
-        usuarioMap.put("email", usuario.getEmail());
-        usuarioMap.put("imagemUrl", usuario.getImagemUrl());
-
-        return usuarioMap;
-    }
     private void excluirImagemDoCloud(UUID usuarioId, Usuario usuario) {
 
         if (usuario.getImagemPublicId() != null) {
@@ -228,6 +146,23 @@ public class UsuarioService {
         }
     }
 
+    public Map<String, Object> getUsuarioLogado(String token) {
+
+        UUID usuarioId = jwtUtil.extrairUsuarioId(token);
+
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RegistroNaoEncontradoException("Usuário não encontrado"));
+
+        Map<String, Object> usuarioMap = new HashMap<>();
+        usuarioMap.put("id", usuario.getId());
+        usuarioMap.put("nome", usuario.getNome());
+        usuarioMap.put("email", usuario.getEmail());
+        usuarioMap.put("imagemUrl", usuario.getImagemUrl());
+
+        return usuarioMap;
+    }
+
+
     public Usuario buscarUsuarioPorId(UUID usuarioId) {
         return usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RegistroNaoEncontradoException("Usuário não encontrado"));
@@ -242,6 +177,8 @@ public class UsuarioService {
         excluirImagemDoCloud(usuarioId, usuario);
         usuarioRepository.delete(usuario);
     }
+
+
 }
 
 
