@@ -55,12 +55,13 @@ public class PetService {
         }
 
         Map uploadResult = cloudinary.uploader().upload(
-                file.getBytes(),
+                file.getInputStream(),
                 ObjectUtils.asMap(
                         "folder", "pets/" + petId,
                         "overwrite", true,
                         "resource_type", "image"
-                ));
+                )
+        );
 
         pet.setImagemUrl(uploadResult.get("secure_url").toString());
         pet.setImagemPublicId(uploadResult.get("public_id").toString());
