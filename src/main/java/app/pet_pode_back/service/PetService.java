@@ -60,7 +60,9 @@ public class PetService {
                         "folder", "pets/" + petId,
                         "overwrite", true,
                         "resource_type", "auto",
-                        "public_id", "pet_image_" + petId
+                        "public_id", "pet_image_" + petId,
+                        "filename", file.getOriginalFilename() != null ? file.getOriginalFilename() : "pet.jpg",
+                        "content_type", file.getContentType() != null ? file.getContentType() : "image/jpeg"
                 )
         );
 
