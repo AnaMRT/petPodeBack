@@ -5,7 +5,6 @@ import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.util.JwtUtil;
 import app.pet_pode_back.service.PetService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -54,11 +53,7 @@ public class PetController {
         UUID usuarioId = jwtUtil.extrairUsuarioId(token.replace("Bearer ", ""));
         return ResponseEntity.ok(petService.editarPet(id, usuarioId, dto));
     }
-    @RequestMapping(
-            value = "/{id}/imagem",
-            method = {RequestMethod.PUT, RequestMethod.POST},
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
+    @PutMapping("/{id}/imagem")
     public ResponseEntity<?> atualizarImagem(
             @PathVariable UUID id,
             @RequestParam("file") MultipartFile file,
