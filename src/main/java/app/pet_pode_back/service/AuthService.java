@@ -80,14 +80,14 @@ public class AuthService {
     }
     public void redefinirSenha(String codigo, String novaSenha) {
         PasswordResetToken resetToken = resetTokenRepository.findByCodigo(codigo)
-                .orElseThrow(() -> new RuntimeException("Código inválido."));
+                .orElseThrow(() -> new ParametroInvalidoException("Código inválido."));
 
         if (resetToken.isUsed()) {
-            throw new RuntimeException("Código já foi utilizado.");
+            throw new ParametroInvalidoException("Código já foi utilizado.");
         }
 
         if (resetToken.getExpirationDate().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Código expirado.");
+            throw new ParametroInvalidoException("Código expirado.");
         }
 
         Usuario usuario = resetToken.getUsuario();

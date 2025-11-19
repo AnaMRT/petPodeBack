@@ -15,9 +15,6 @@ import java.util.*;
 public class PlantaService {
     @Autowired
     private PlantaRepository plantaRepository;
-    public PlantaService(PlantaRepository plantaRepository) {
-        this.plantaRepository = plantaRepository;
-    }
     public Plantas cadastrar(@Valid Plantas plantas) {
         plantaRepository.save(plantas);
         return plantas;

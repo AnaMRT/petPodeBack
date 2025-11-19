@@ -7,9 +7,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import io.jsonwebtoken.*;
 
 @ControllerAdvice
 public class RestExceptionHandler {
@@ -28,6 +30,19 @@ public class RestExceptionHandler {
         return ResponseEntity.status(status).body(error);
     }
 
+    @ExceptionHandler({
+            JwtException.class,
+            MalformedJwtException.class,
+            ExpiredJwtException.class,
+            UnsupportedJwtException.class,
+            SignatureException.class
+    })
+    public ResponseEntity<ErroResponse> trataJwtInvalido(
+            RuntimeException ex,
+            HttpServletRequest request) {
+
+        return buildResponse(HttpStatus.BAD_REQUEST, "Token inválido.", request);
+    }
     @ExceptionHandler(RegistroNaoEncontradoException.class)
     public ResponseEntity<ErroResponse> trataRegistroNaoEncontrado(
             RegistroNaoEncontradoException ex,
@@ -90,6 +105,18 @@ public class RestExceptionHandler {
 
         HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
         return buildResponse(status, ex.getReason(), request);
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ErroResponse> trataHeaderFaltando(
+            MissingRequestHeaderException ex,
+            HttpServletRequest request) {
+
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "O header " + ex.getHeaderName() + " é obrigatório.",
+                request
+        );
     }
 
     @ExceptionHandler(Exception.class)

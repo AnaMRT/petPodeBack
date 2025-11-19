@@ -36,20 +36,14 @@ public class AuthController {
     }
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestParam("email") String email) {
-        try {
-            authService.solicitarRedefinicaoSenha(email);
-            return ResponseEntity.ok("Código de redefinição de senha enviado por e-mail.");
-        } catch (Exception e) {
-            return ResponseEntity.status(400).body(e.getMessage());
-        }
+        authService.solicitarRedefinicaoSenha(email);
+        return ResponseEntity.ok("Código de redefinição de senha enviado por e-mail.");
     }
+
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordDTO dto) {
-        try {
-            authService.redefinirSenha(dto.getCodigo(), dto.getNovaSenha());
-            return ResponseEntity.ok("Senha redefinida com sucesso.");
-        } catch (Exception e) {
-            return ResponseEntity.status(400).body(e.getMessage());
-        }
+        authService.redefinirSenha(dto.getCodigo(), dto.getNovaSenha());
+        return ResponseEntity.ok("Senha redefinida com sucesso.");
     }
+
 }

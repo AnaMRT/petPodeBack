@@ -131,8 +131,6 @@ public class UsuarioService {
             }
         }
 
-        usuarioRepository.delete(usuario);
-
         try {
             cloudinary.api().deleteFolder("usuarios/" + usuarioId, ObjectUtils.emptyMap());
         } catch (Exception e) {
@@ -168,10 +166,7 @@ public class UsuarioService {
                 .orElseThrow(() -> new RegistroNaoEncontradoException("Usuário não encontrado"));
     }
 
-    private Usuario buscarUsuarioPorEmail(String email) {
-        return usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new RegistroNaoEncontradoException("Usuário não encontrado."));
-    }
+
     public void remover(UUID usuarioId) {
         Usuario usuario = buscarUsuarioPorId(usuarioId);
         excluirImagemDoCloud(usuarioId, usuario);

@@ -10,6 +10,15 @@ public class LoginRequest {
     private String email;
     @NotBlank(message = "A senha é obrigatória")
     private String senha;
+
+    public LoginRequest(String email, String senha) {
+        this.email = email;
+        this.senha = senha;
+    }
+
+    public LoginRequest() {
+    }
+
     public String getEmail() {
         return email;
     }

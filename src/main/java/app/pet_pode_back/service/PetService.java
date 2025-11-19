@@ -68,11 +68,7 @@ public class PetService {
 
         return pet.getImagemUrl();
     }
-    private void validarDono(Pet pet, UUID usuarioId) {
-        if (!pet.getUsuario().getId().equals(usuarioId)) {
-            throw new SemPermissaoException("Você não tem permissão para alterar esse pet.");
-        }
-    }
+
     private void excluirImagemDoCloud(UUID petId, Pet pet) {
 
         if (pet.getImagemPublicId() != null) {
@@ -101,5 +97,10 @@ public class PetService {
     private Pet buscarPet(UUID petId) {
         return petRepository.findById(petId)
                 .orElseThrow(() -> new PetNotFoundException("Pet não encontrado."));
+    }
+    private void validarDono(Pet pet, UUID usuarioId) {
+        if (!pet.getUsuario().getId().equals(usuarioId)) {
+            throw new SemPermissaoException("Você não tem permissão para alterar esse pet.");
+        }
     }
 }

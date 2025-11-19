@@ -36,4 +36,6 @@ public class FavoritosController {
         UUID usuarioId = jwtUtil.extrairUsuarioId(token.replace("Bearer ", "").trim());
         return ResponseEntity.ok(favoritosService.listarFavoritos(usuarioId));
     }
+
+
 }

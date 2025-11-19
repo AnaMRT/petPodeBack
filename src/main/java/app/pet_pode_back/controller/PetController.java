@@ -1,6 +1,7 @@
 package app.pet_pode_back.controller;
 
 import app.pet_pode_back.dto.PetUpdateDTO;
+import app.pet_pode_back.exception.SemPermissaoException;
 import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.util.JwtUtil;
 import app.pet_pode_back.service.PetService;
@@ -63,6 +64,7 @@ public class PetController {
         String url = petService.atualizarImagemPet(id, usuarioId, file);
         return ResponseEntity.ok(Map.of("imagemUrl", url));
     }
+
 }
 
 

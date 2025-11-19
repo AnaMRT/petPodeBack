@@ -1,0 +1,213 @@
+package app.pet_pode_back.unit.controller;
+
+import app.pet_pode_back.controller.PetController;
+import app.pet_pode_back.dto.PetUpdateDTO;
+import app.pet_pode_back.exception.PetNotFoundException;
+import app.pet_pode_back.exception.RegistroNaoEncontradoException;
+import app.pet_pode_back.exception.SemPermissaoException;
+import app.pet_pode_back.exception.handler.RestExceptionHandler;
+import app.pet_pode_back.model.Pet;
+import app.pet_pode_back.service.PetService;
+import app.pet_pode_back.util.JwtUtil;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.web.servlet.MockMvc;
+
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.util.NestedServletException;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+class PetControllerTest {
+
+    private MockMvc mockMvc;
+
+    @InjectMocks
+    private PetController petController;
+
+    @Mock
+    private PetService petService;
+
+    @Mock
+    private JwtUtil jwtUtil;
+
+    private ObjectMapper mapper = new ObjectMapper();
+
+    private UUID usuarioId;
+    private UUID petId;
+
+    private Pet pet;
+
+    @BeforeEach
+    void setup() {
+        MockitoAnnotations.openMocks(this);
+
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(petController)
+                .setControllerAdvice(new RestExceptionHandler()) // IMPORTANTE PARA UNITS!
+                .build();
+
+
+        usuarioId = UUID.randomUUID();
+        petId = UUID.randomUUID();
+
+        pet = new Pet();
+        pet.setId(petId);
+        pet.setNome("Rex");
+
+        when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuarioId);
+    }
+
+
+    @Test
+    void deveCadastrarPetComSucesso() throws Exception {
+        when(petService.salvarPet(any(Pet.class), eq(usuarioId))).thenReturn(pet);
+
+        mockMvc.perform(post("/pet")
+                        .header("Authorization", "Bearer token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(pet)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(petId.toString()))
+                .andExpect(jsonPath("$.nome").value("Rex"));
+    }
+
+    @Test
+    void deveListarPetsDoUsuario() throws Exception {
+        when(petService.listarPetsPorUsuario(usuarioId)).thenReturn(List.of(pet));
+
+        mockMvc.perform(get("/pet")
+                        .header("Authorization", "Bearer token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(petId.toString()));
+    }
+
+    @Test
+    void deveExcluirPetComSucesso() throws Exception {
+        mockMvc.perform(delete("/pet/" + petId)
+                        .header("Authorization", "Bearer token"))
+                .andExpect(status().isNoContent());
+
+        verify(petService).excluirPetDoUsuario(usuarioId, petId);
+    }
+
+    @Test
+    void deveEditarPetComSucesso() throws Exception {
+        PetUpdateDTO dto = new PetUpdateDTO();
+        dto.setNome("Novo nome");
+
+        when(petService.editarPet(eq(petId), eq(usuarioId), any(PetUpdateDTO.class)))
+                .thenReturn(pet);
+
+        mockMvc.perform(put("/pet/" + petId)
+                        .header("Authorization", "Bearer token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(petId.toString()));
+    }
+
+    @Test
+    void deveAtualizarImagemComSucesso() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "pet.jpg", "image/jpeg", "conteudo".getBytes()
+        );
+
+        when(petService.atualizarImagemPet(eq(petId), eq(usuarioId), any()))
+                .thenReturn("http://imagem.com/pet.jpg");
+
+        mockMvc.perform(multipart("/pet/" + petId + "/imagem")
+                        .file(file)
+                        .with(request -> {
+                            request.setMethod("PUT"); // 🔥 ESSENCIAL
+                            return request;
+                        })
+                        .header("Authorization", "Bearer token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.imagemUrl").value("http://imagem.com/pet.jpg"));
+    }
+
+    @Test
+    void deveRetornarNotFoundQuandoPetNaoExisteNoEditar() throws Exception {
+        when(petService.editarPet(any(), any(), any()))
+                .thenThrow(new PetNotFoundException("Pet não encontrado."));
+
+        PetUpdateDTO dto = new PetUpdateDTO();
+
+        mockMvc.perform(put("/pet/" + petId)
+                        .header("Authorization", "Bearer token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(dto)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Pet não encontrado."));
+    }
+
+    @Test
+    void deveRetornarNotFoundAoExcluirPetInexistente() throws Exception {
+        doThrow(new PetNotFoundException("Pet não encontrado."))
+                .when(petService).excluirPetDoUsuario(any(), any());
+
+        mockMvc.perform(delete("/pet/" + petId)
+                        .header("Authorization", "Bearer token"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Pet não encontrado."));
+    }
+
+
+
+    @Test
+    void deveRetornarForbiddenAoExcluirPetDeOutroUsuario() throws Exception {
+        doThrow(new SemPermissaoException("Você não tem permissão para alterar esse pet."))
+                .when(petService).excluirPetDoUsuario(any(), any());
+
+        mockMvc.perform(delete("/pet/" + petId)
+                        .header("Authorization", "Bearer token"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.mensagem").value("Você não tem permissão para alterar esse pet."));
+    }
+
+
+    @Test
+    void deveRetornarNotFoundQuandoUsuarioNaoExisteAoCadastrar() throws Exception {
+        when(petService.salvarPet(any(), any()))
+                .thenThrow(new RegistroNaoEncontradoException("Usuário não encontrado."));
+
+        mockMvc.perform(post("/pet")
+                        .header("Authorization", "Bearer token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(pet)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado."));
+    }
+
+
+
+    @Test
+    void deveRetornarErro500QuandoOcorreErroInterno() throws Exception {
+        when(petService.listarPetsPorUsuario(any()))
+                .thenThrow(new RuntimeException("Erro inesperado."));
+
+        mockMvc.perform(get("/pet")
+                        .header("Authorization", "Bearer token"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.mensagem").value("Erro inesperado. Tente novamente."));
+    }
+
+}
