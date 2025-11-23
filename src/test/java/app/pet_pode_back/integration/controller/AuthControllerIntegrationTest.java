@@ -1,0 +1,337 @@
+package app.pet_pode_back.integration;
+
+import app.pet_pode_back.model.Usuario;
+import app.pet_pode_back.repository.UsuarioRepository;
+import app.pet_pode_back.model.PasswordResetToken;
+import app.pet_pode_back.repository.PasswordResetTokenRepository;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.LocalDateTime;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@SpringBootTest
+@ActiveProfiles("test")
+@AutoConfigureMockMvc
+public class AuthControllerIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private PasswordResetTokenRepository resetTokenRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @BeforeEach
+    void limparBanco() {
+        resetTokenRepository.deleteAll();
+        usuarioRepository.deleteAll();
+    }
+
+    // -------------------------------
+    // MÉTODO AUXILIAR PARA TESTES
+    // -------------------------------
+    private PasswordResetToken criarToken(Usuario usuario, String codigo, boolean usado, LocalDateTime expira) {
+        PasswordResetToken t = new PasswordResetToken();
+        t.setUsuario(usuario);
+        t.setCodigo(codigo);
+        t.setUsed(usado);
+        t.setExpirationDate(expira);
+        return resetTokenRepository.save(t);
+    }
+
+    // -------------------------------
+    // 1 — REGISTRAR (SUCESSO)
+    // -------------------------------
+    @Test
+    void deveRegistrarUsuarioComSucesso() throws Exception {
+
+        String json = """
+                {
+                  "nome": "Rafa",
+                  "email": "teste@teste.com",
+                  "senha": "123"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/cadastro")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").exists());
+    }
+
+    // -------------------------------
+    // 2 — REGISTRAR (EMAIL JA EXISTE)
+    // -------------------------------
+    @Test
+    void deveFalharAoRegistrarComEmailDuplicado() throws Exception {
+
+        Usuario u = new Usuario();
+        u.setNome("Rafa");
+        u.setEmail("duplicado@test.com");
+        u.setSenha(passwordEncoder.encode("123"));
+        usuarioRepository.save(u);
+
+        String json = """
+                {
+                  "nome": "Outro",
+                  "email": "duplicado@test.com",
+                  "senha": "abc"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/cadastro")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value("Email já cadastrado"));
+    }
+
+    // -------------------------------
+    // 3 — LOGIN (SUCESSO)
+    // -------------------------------
+    @Test
+    void deveLogarComSucesso() throws Exception {
+
+        Usuario u = new Usuario();
+        u.setNome("Rafa");
+        u.setEmail("login@test.com");
+        u.setSenha(passwordEncoder.encode("123"));
+        usuarioRepository.save(u);
+
+        String json = """
+                {
+                  "email": "login@test.com",
+                  "senha": "123"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").exists());
+    }
+
+    // -------------------------------
+    // 4 — LOGIN (SENHA INCORRETA)
+    // -------------------------------
+    @Test
+    void deveFalharLoginSenhaIncorreta() throws Exception {
+
+        Usuario u = new Usuario();
+        u.setNome("Rafa");
+        u.setEmail("senhaerrada@test.com");
+        u.setSenha(passwordEncoder.encode("123"));
+        usuarioRepository.save(u);
+
+        String json = """
+                {
+                  "email": "senhaerrada@test.com",
+                  "senha": "999"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value("Credenciais inválidas"));
+    }
+
+    // -------------------------------
+    // 5 — LOGIN (EMAIL INEXISTENTE)
+    // -------------------------------
+    @Test
+    void deveFalharLoginComEmailNaoEncontrado() throws Exception {
+
+        String json = """
+                {
+                  "email": "naoexiste@test.com",
+                  "senha": "123"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
+    }
+
+    // -------------------------------
+    // 6 — FORGOT PASSWORD (SUCESSO)
+    // -------------------------------
+    @Test
+    void deveSolicitarRedefinicaoSenhaComSucesso() throws Exception {
+
+        Usuario u = new Usuario();
+        u.setNome("Rafa");
+        u.setEmail("reset@test.com");
+        u.setSenha(passwordEncoder.encode("123"));
+        usuarioRepository.save(u);
+
+        mockMvc.perform(post("/auth/forgot-password")
+                        .param("email", "reset@test.com"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Código de redefinição de senha enviado por e-mail."));
+
+        assertEquals(1, resetTokenRepository.count());
+    }
+
+    // -------------------------------
+    // 7 — FORGOT PASSWORD (EMAIL NÃO EXISTE)
+    // -------------------------------
+    @Test
+    void deveFalharAoSolicitarRedefinicaoSenhaEmailNaoExiste() throws Exception {
+
+        mockMvc.perform(post("/auth/forgot-password")
+                        .param("email", "naoexiste@test.com"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
+    }
+
+    // -------------------------------
+    // 8 — RESET PASSWORD (SUCESSO)
+    // -------------------------------
+    @Test
+    void deveRedefinirSenhaComSucesso() throws Exception {
+
+        Usuario u = new Usuario();
+        u.setNome("Rafa");
+        u.setEmail("okreset@test.com");
+        u.setSenha(passwordEncoder.encode("123"));
+        usuarioRepository.save(u);
+
+        criarToken(u, "999999", false, LocalDateTime.now().plusMinutes(10));
+
+        String json = """
+                {
+                  "codigo": "999999",
+                  "novaSenha": "nova123"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Senha redefinida com sucesso."));
+
+        Usuario atualizado = usuarioRepository.findByEmail("okreset@test.com").get();
+        assertTrue(passwordEncoder.matches("nova123", atualizado.getSenha()));
+    }
+
+    // -------------------------------
+    // 9 — RESET PASSWORD (TOKEN INVÁLIDO)
+    // -------------------------------
+    @Test
+    void deveFalharAoRedefinirSenhaTokenInvalido() throws Exception {
+
+        String json = """
+                {
+                  "codigo": "naoexiste",
+                  "novaSenha": "abc"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value("Código inválido."));
+    }
+
+    // -------------------------------
+    // 10 — RESET PASSWORD (TOKEN JÁ USADO)
+    // -------------------------------
+    @Test
+    void deveFalharAoRedefinirSenhaTokenUsado() throws Exception {
+
+        Usuario u = new Usuario();
+        u.setNome("Rafa");
+        u.setEmail("used@test.com");
+        u.setSenha(passwordEncoder.encode("123"));
+        usuarioRepository.save(u);
+
+        criarToken(u, "888888", true, LocalDateTime.now().plusMinutes(10));
+
+        String json = """
+                {
+                  "codigo": "888888",
+                  "novaSenha": "nova123"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value("Código já foi utilizado."));
+    }
+
+    // -------------------------------
+    // 11 — RESET PASSWORD (TOKEN EXPIRADO)
+    // -------------------------------
+    @Test
+    void deveFalharAoRedefinirSenhaTokenExpirado() throws Exception {
+
+        Usuario u = new Usuario();
+        u.setNome("Rafa");
+        u.setEmail("expirado@test.com");
+        u.setSenha(passwordEncoder.encode("123"));
+        usuarioRepository.save(u);
+
+        criarToken(u, "777777", false, LocalDateTime.now().minusMinutes(1));
+
+        String json = """
+                {
+                  "codigo": "777777",
+                  "novaSenha": "nova123"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value("Código expirado."));
+    }
+
+    // -------------------------------
+    // 12 — RESET PASSWORD (CAMPOS OBRIGATÓRIOS FALTANDO)
+    // -------------------------------
+    @Test
+    void deveFalharAoRedefinirSenhaSemCamposObrigatorios() throws Exception {
+
+        String json = """
+                {
+                  "codigo": "",
+                  "novaSenha": ""
+                }
+                """;
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+}

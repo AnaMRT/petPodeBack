@@ -4,20 +4,16 @@ import app.pet_pode_back.dto.UsuarioUpdateDTO;
 import app.pet_pode_back.exception.ParametroInvalidoException;
 import app.pet_pode_back.exception.RegistroNaoEncontradoException;
 import app.pet_pode_back.model.Pet;
-import app.pet_pode_back.model.Plantas;
 import app.pet_pode_back.model.Usuario;
-import app.pet_pode_back.repository.PasswordResetTokenRepository;
-import app.pet_pode_back.repository.PlantaRepository;
 import app.pet_pode_back.repository.UsuarioRepository;
-import app.pet_pode_back.dto.PasswordResetToken;
-import app.pet_pode_back.util.JwtUtil;
+import app.pet_pode_back.security.JwtUtil;
 import com.cloudinary.Cloudinary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import java.time.LocalDateTime;
+
 import java.util.*;
-import jakarta.validation.Valid;
+
 import com.cloudinary.utils.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;

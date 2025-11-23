@@ -4,7 +4,7 @@ import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.PetRepository;
 import app.pet_pode_back.repository.UsuarioRepository;
-import app.pet_pode_back.util.JwtUtil;
+import app.pet_pode_back.security.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,8 +16,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.anyString;

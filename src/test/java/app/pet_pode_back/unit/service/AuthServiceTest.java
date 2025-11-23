@@ -1,7 +1,7 @@
 package app.pet_pode_back.unit.service;
 
 import app.pet_pode_back.dto.LoginRequest;
-import app.pet_pode_back.dto.PasswordResetToken;
+import app.pet_pode_back.model.PasswordResetToken;
 import app.pet_pode_back.exception.ParametroInvalidoException;
 import app.pet_pode_back.exception.RegistroNaoEncontradoException;
 import app.pet_pode_back.model.Usuario;
@@ -9,12 +9,10 @@ import app.pet_pode_back.repository.UsuarioRepository;
 import app.pet_pode_back.repository.PasswordResetTokenRepository;
 import app.pet_pode_back.service.AuthService;
 import app.pet_pode_back.service.EmailService;
-import app.pet_pode_back.util.JwtUtil;
+import app.pet_pode_back.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;

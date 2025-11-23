@@ -5,7 +5,7 @@ import app.pet_pode_back.model.Plantas;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.service.PlantaService;
 import app.pet_pode_back.service.UsuarioService;
-import app.pet_pode_back.util.JwtUtil;
+import app.pet_pode_back.security.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

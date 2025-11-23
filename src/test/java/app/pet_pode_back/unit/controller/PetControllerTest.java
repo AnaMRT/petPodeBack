@@ -8,7 +8,7 @@ import app.pet_pode_back.exception.SemPermissaoException;
 import app.pet_pode_back.exception.handler.RestExceptionHandler;
 import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.service.PetService;
-import app.pet_pode_back.util.JwtUtil;
+import app.pet_pode_back.security.JwtUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -24,10 +24,8 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.util.NestedServletException;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;

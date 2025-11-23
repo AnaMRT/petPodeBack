@@ -1,9 +1,8 @@
 package app.pet_pode_back.controller;
 
 import app.pet_pode_back.dto.PetUpdateDTO;
-import app.pet_pode_back.exception.SemPermissaoException;
 import app.pet_pode_back.model.Pet;
-import app.pet_pode_back.util.JwtUtil;
+import app.pet_pode_back.security.JwtUtil;
 import app.pet_pode_back.service.PetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,10 +16,13 @@ import java.util.UUID;
 @RestController
 @RequestMapping(path = "pet")
 public class PetController {
+
     @Autowired
     private PetService petService;
+
     @Autowired
     private JwtUtil jwtUtil;
+
     @PostMapping
     public ResponseEntity<Pet> cadastrarPet(
             @RequestBody Pet pet,

@@ -1,4 +1,4 @@
-package app.pet_pode_back.util;
+package app.pet_pode_back.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;

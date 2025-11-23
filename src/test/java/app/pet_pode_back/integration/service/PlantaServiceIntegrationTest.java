@@ -5,7 +5,7 @@ import app.pet_pode_back.model.Plantas;
 import app.pet_pode_back.repository.PlantaRepository;
 import app.pet_pode_back.service.EmailService;
 import app.pet_pode_back.service.PlantaService;
-import app.pet_pode_back.util.JwtUtil;
+import app.pet_pode_back.security.JwtUtil;
 import com.cloudinary.Cloudinary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

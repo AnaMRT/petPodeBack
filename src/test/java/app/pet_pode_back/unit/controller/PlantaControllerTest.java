@@ -7,14 +7,13 @@ import app.pet_pode_back.model.Plantas;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.service.PlantaService;
 import app.pet_pode_back.service.UsuarioService;
-import app.pet_pode_back.util.JwtUtil;
+import app.pet_pode_back.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 

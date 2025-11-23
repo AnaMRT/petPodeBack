@@ -1,19 +1,14 @@
 package app.pet_pode_back.unit.service;
 
-import app.pet_pode_back.dto.PasswordResetToken;
 import app.pet_pode_back.dto.UsuarioUpdateDTO;
 import app.pet_pode_back.exception.ParametroInvalidoException;
 import app.pet_pode_back.exception.RegistroNaoEncontradoException;
 import app.pet_pode_back.model.Pet;
-import app.pet_pode_back.model.Plantas;
 import app.pet_pode_back.model.Usuario;
-import app.pet_pode_back.repository.PasswordResetTokenRepository;
 import app.pet_pode_back.repository.PlantaRepository;
 import app.pet_pode_back.repository.UsuarioRepository;
-import app.pet_pode_back.service.EmailService;
-import app.pet_pode_back.service.PlantaService;
 import app.pet_pode_back.service.UsuarioService;
-import app.pet_pode_back.util.JwtUtil;
+import app.pet_pode_back.security.JwtUtil;
 import com.cloudinary.Api;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.Uploader;
@@ -24,7 +19,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;

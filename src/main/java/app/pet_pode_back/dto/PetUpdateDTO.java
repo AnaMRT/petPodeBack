@@ -3,8 +3,10 @@ package app.pet_pode_back.dto;
 import java.util.Objects;
 
 public class PetUpdateDTO {
+
     private String nome;
     private String especie;
+
     public PetUpdateDTO() {
     }
     public PetUpdateDTO(String nome, String especie) {

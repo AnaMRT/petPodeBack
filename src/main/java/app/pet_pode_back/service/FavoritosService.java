@@ -5,12 +5,9 @@ import app.pet_pode_back.model.Plantas;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.PlantaRepository;
 import app.pet_pode_back.repository.UsuarioRepository;
-import app.pet_pode_back.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 @Service

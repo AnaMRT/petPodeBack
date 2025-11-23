@@ -1,13 +1,13 @@
 package app.pet_pode_back.service;
 
 import app.pet_pode_back.dto.LoginRequest;
-import app.pet_pode_back.dto.PasswordResetToken;
+import app.pet_pode_back.model.PasswordResetToken;
 import app.pet_pode_back.exception.ParametroInvalidoException;
 import app.pet_pode_back.exception.RegistroNaoEncontradoException;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.UsuarioRepository;
 import app.pet_pode_back.repository.PasswordResetTokenRepository;
-import app.pet_pode_back.util.JwtUtil;
+import app.pet_pode_back.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

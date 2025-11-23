@@ -4,14 +4,13 @@ import app.pet_pode_back.dto.UsuarioUpdateDTO;
 import app.pet_pode_back.exception.SemPermissaoException;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.UsuarioRepository;
-import app.pet_pode_back.util.JwtUtil;
+import app.pet_pode_back.security.JwtUtil;
 import app.pet_pode_back.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import com.cloudinary.Cloudinary;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,12 +24,16 @@ import java.util.UUID;
 @RestController
 @RequestMapping(path = "usuario")
 public class UsuarioController {
+
     @Autowired
     private UsuarioService usuarioService;
+
     @Autowired
     private UsuarioRepository usuarioRepository;
+
     @Autowired
     private JwtUtil jwtUtil;
+
     @Autowired
     private Cloudinary cloudinary;
 

@@ -1,8 +1,17 @@
 package app.pet_pode_back.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+
 public class UsuarioUpdateDTO {
+
+    @NotBlank(message = "Nome nao pode ser nulo")
     private String nome;
+
+    @NotBlank(message = "Email nao pode ser nulo")
+    @Email
     private String email;
+
     private String senha;
     private String confirmarSenha;
     private String senhaAtual;

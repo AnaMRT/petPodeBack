@@ -1,6 +1,5 @@
-package app.pet_pode_back.dto;
+package app.pet_pode_back.model;
 
-import app.pet_pode_back.model.Usuario;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 

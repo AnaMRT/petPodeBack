@@ -1,4 +1,4 @@
-package app.pet_pode_back.security;
+package app.pet_pode_back.config;
 
 
 import org.springframework.context.annotation.Bean;

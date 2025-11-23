@@ -2,16 +2,11 @@ package app.pet_pode_back.controller;
 
 import app.pet_pode_back.dto.LoginRequest;
 import app.pet_pode_back.dto.ResetPasswordDTO;
-import app.pet_pode_back.exception.RegistroNaoEncontradoException;
 import app.pet_pode_back.model.Usuario;
-import app.pet_pode_back.repository.UsuarioRepository;
 import app.pet_pode_back.service.AuthService;
-import app.pet_pode_back.util.JwtUtil;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,7 +36,7 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordDTO dto) {
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordDTO dto) {
         authService.redefinirSenha(dto.getCodigo(), dto.getNovaSenha());
         return ResponseEntity.ok("Senha redefinida com sucesso.");
     }

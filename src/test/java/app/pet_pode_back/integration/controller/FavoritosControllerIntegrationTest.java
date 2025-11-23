@@ -1,9 +1,8 @@
 package app.pet_pode_back.integration.controller;
 
 import app.pet_pode_back.model.Plantas;
-import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.service.FavoritosService;
-import app.pet_pode_back.util.JwtUtil;
+import app.pet_pode_back.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

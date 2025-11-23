@@ -3,7 +3,7 @@ package app.pet_pode_back.unit.controller;
 import app.pet_pode_back.controller.FavoritosController;
 import app.pet_pode_back.model.Plantas;
 import app.pet_pode_back.service.FavoritosService;
-import app.pet_pode_back.util.JwtUtil;
+import app.pet_pode_back.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
