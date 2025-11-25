@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# Variáveis de ambiente (não subir para Git)
+.env
+.env.test
