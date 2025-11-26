@@ -103,4 +103,46 @@ class PlantaServiceIntegrationTest {
         List<Plantas> resultado = plantaService.buscarPlantas("", pet);
         assertThat(resultado).contains(planta2);
     }
+
+    @Test
+    void deveBuscarPlantasPorNomeCientifico() {
+        List<Plantas> resultado = plantaService.buscarPlantas("Nephrolepis", null);
+        assertThat(resultado).contains(planta1);
+    }
+
+    @Test
+    void deveIgnorarEspacosAntesEDepoisDoTermo() {
+        List<Plantas> resultado = plantaService.buscarPlantas("   samambaia   ", null);
+        assertThat(resultado).contains(planta1);
+    }
+
+    @Test
+    void deveEncontrarMesmoQuandoTermoSemAcento() {
+        List<Plantas> resultado = plantaService.buscarPlantas("samambaia", null);
+        assertThat(resultado).contains(planta1);
+    }
+
+    @Test
+    void naoDeveGerarDuplicacaoQuandoPlantaApareceEmMaisDeUmaRegra() {
+        // Adicionando planta2 toxica para caninos e felinos
+        List<Plantas> resultado = plantaService.buscarPlantas("canino", null);
+        assertThat(resultado).hasSize(1); // planta2 só aparece uma vez
+    }
+
+    @Test
+    void deveRetornarVazioQuandoTermoPossuiCaracteresInvalidos() {
+        List<Plantas> resultado = plantaService.buscarPlantas("@#$%", null);
+        assertThat(resultado).isEmpty();
+    }
+
+    @Test
+    void deveBuscarPlantasRelacionadasAoNomeDoPet() {
+        Pet pet = new Pet();
+        pet.setNome("Rex");
+        pet.setEspecie("CANINO");
+
+        List<Plantas> resultado = plantaService.buscarPlantas("rex", pet);
+        assertThat(resultado).contains(planta2); // toxica para caninos
+    }
+
 }

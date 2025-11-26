@@ -1,5 +1,6 @@
 package app.pet_pode_back.integration.controller;
 
+import app.pet_pode_back.exception.RegistroNaoEncontradoException;
 import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.model.Plantas;
 import app.pet_pode_back.model.Usuario;
@@ -92,5 +93,73 @@ public class PlantasControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].nomePopular").value("Rosa"));
     }
+
+    @Test
+    public void deveBuscarMesmoSeUsuarioNaoTemPet() throws Exception {
+        usuario.setPets(List.of()); // sem pets
+        Mockito.when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuario.getId());
+        Mockito.when(usuarioService.buscarUsuarioPorId(usuario.getId())).thenReturn(usuario);
+        Mockito.when(plantaService.buscarPlantas(anyString(), any())).thenReturn(List.of());
+
+        mockMvc.perform(get("/plantas/search")
+                        .header("Authorization", "Bearer tokenFake")
+                        .param("termo", "Rosa"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    public void deveTratarTokenSemBearer() throws Exception {
+        Mockito.when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuario.getId());
+        Mockito.when(usuarioService.buscarUsuarioPorId(usuario.getId())).thenReturn(usuario);
+        Mockito.when(plantaService.buscarPlantas(anyString(), any())).thenReturn(List.of(planta));
+
+        mockMvc.perform(get("/plantas/search")
+                        .header("Authorization", usuario.getId().toString()) // sem "Bearer"
+                        .param("termo", "Rosa"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].nomePopular").value("Rosa"));
+    }
+
+    @Test
+    public void deveRetornar404QuandoUsuarioNaoExistir() throws Exception {
+        Mockito.when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(UUID.randomUUID());
+        Mockito.when(usuarioService.buscarUsuarioPorId(any()))
+                .thenThrow(new RegistroNaoEncontradoException("Usuário não encontrado"));
+
+        mockMvc.perform(get("/plantas/search")
+                        .header("Authorization", "Bearer tokenFake")
+                        .param("termo", "Rosa"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
+    }
+
+    @Test
+    public void devePropagarExcecaoDoService() throws Exception {
+        Mockito.when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuario.getId());
+        Mockito.when(usuarioService.buscarUsuarioPorId(usuario.getId())).thenReturn(usuario);
+        Mockito.when(plantaService.buscarPlantas(anyString(), any()))
+                .thenThrow(new IllegalArgumentException("Erro no service"));
+
+        mockMvc.perform(get("/plantas/search")
+                        .header("Authorization", "Bearer tokenFake")
+                        .param("termo", "Rosa"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value("Erro no service"));
+    }
+
+    @Test
+    public void deveBuscarPlantasPorNomeCientifico() throws Exception {
+        Mockito.when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuario.getId());
+        Mockito.when(usuarioService.buscarUsuarioPorId(usuario.getId())).thenReturn(usuario);
+        Mockito.when(plantaService.buscarPlantas("Nephrolepis", pet)).thenReturn(List.of(planta));
+
+        mockMvc.perform(get("/plantas/search")
+                        .header("Authorization", "Bearer tokenFake")
+                        .param("termo", "Nephrolepis"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].nomePopular").value("Rosa"));
+    }
+
 
 }

@@ -15,7 +15,7 @@ public class Pet {
     @Column
     private UUID id;
     @Column
-    @Size(max = 100, message = "O nome deve ter ate 100 caracteres")
+    @Size(min = 2, max = 100, message = "O nome deve ter entre 2 e 100 caracteres.")
     private String nome;
     @Column
     private String especie;

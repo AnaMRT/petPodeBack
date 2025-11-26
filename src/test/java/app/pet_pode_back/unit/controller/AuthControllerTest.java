@@ -5,19 +5,32 @@ import app.pet_pode_back.dto.LoginRequest;
 import app.pet_pode_back.dto.ResetPasswordDTO;
 import app.pet_pode_back.exception.ParametroInvalidoException;
 import app.pet_pode_back.exception.RegistroNaoEncontradoException;
+import app.pet_pode_back.model.PasswordResetToken;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 class AuthControllerTest {
 
@@ -27,11 +40,20 @@ class AuthControllerTest {
     @Mock
     private AuthService authService;
 
+    private ObjectMapper objectMapper;
+    private MockMvc mockMvc;
+
     private Usuario usuario;
 
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
+
+        objectMapper = new ObjectMapper();
+
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .build();
+
         usuario = new Usuario();
         usuario.setId(UUID.randomUUID());
         usuario.setEmail("teste@teste.com");
@@ -189,4 +211,42 @@ class AuthControllerTest {
         assertEquals("Senha inválida", ex.getMessage());
         verify(authService).redefinirSenha("123456", "");
     }
+
+    @Test
+    void deveFalharAoLogarComCamposInvalidos() throws Exception {
+        LoginRequest request = new LoginRequest("", "");
+
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+
+    @Test
+    void deveFalharAoRegistrarComCamposInvalidos() throws Exception {
+        Usuario request = new Usuario();
+        request.setNome("");
+        request.setEmail("");
+        request.setSenha("");
+
+        mockMvc.perform(post("/auth/cadastro")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+
+    @Test
+    void deveFalharAoResetarSenhaComCamposInvalidos() throws Exception {
+        ResetPasswordDTO request = new ResetPasswordDTO();
+        request.setCodigo("");
+        request.setNovaSenha("");
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
 }

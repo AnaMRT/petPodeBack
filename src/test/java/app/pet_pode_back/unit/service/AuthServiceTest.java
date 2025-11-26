@@ -46,16 +46,14 @@ class AuthServiceTest {
 
     @BeforeEach
     void setup() {
-        MockitoAnnotations.openMocks(this); // Inicializa @Mock e @InjectMocks
+        MockitoAnnotations.openMocks(this);
         usuario = new Usuario();
         usuario.setId(UUID.randomUUID());
         usuario.setEmail("teste@teste.com");
         usuario.setSenha("senhaCriptografada");
     }
 
-    // -------------------------------------------------------------
-    // LOGIN
-    // -------------------------------------------------------------
+
     @Test
     void deveLogarComSucesso() {
         LoginRequest request = new LoginRequest();
@@ -195,4 +193,66 @@ class AuthServiceTest {
         );
         assertEquals("Código expirado.", ex.getMessage());
     }
+
+    @Test
+    void deveEnviarCodigoDeRedefinicaoComSucesso() {
+        String email = "teste@email.com";
+        Usuario usuario = new Usuario();
+        usuario.setEmail(email);
+
+        PasswordResetToken resetToken = new PasswordResetToken();
+        resetToken.setCodigo("123456");
+        resetToken.setUsuario(usuario);
+        resetToken.setExpirationDate(LocalDateTime.now().plusMinutes(10));
+        resetToken.setUsed(false);
+
+        when(usuarioRepository.findByEmail(email)).thenReturn(Optional.of(usuario));
+        when(resetTokenRepository.save(any(PasswordResetToken.class))).thenReturn(resetToken);
+        doNothing().when(emailService).enviarEmail(anyString(), anyString(), anyString());
+
+        authService.solicitarRedefinicaoSenha(email);
+
+        verify(usuarioRepository, times(1)).findByEmail(email);
+        verify(resetTokenRepository, times(1)).save(any(PasswordResetToken.class));
+        verify(emailService, times(1))
+                .enviarEmail(eq(email), anyString(), contains("Seu código de verificação"));
+    }
+
+
+    @Test
+    void deveLancarExcecaoQuandoEmailNaoEncontradoSolicitarRedefinicaoSenha() {
+        String email = "naoexiste@email.com";
+        when(usuarioRepository.findByEmail(email)).thenReturn(Optional.empty());
+
+        assertThrows(RegistroNaoEncontradoException.class, () -> {
+            authService.solicitarRedefinicaoSenha(email);
+        });
+
+        verify(usuarioRepository, times(1)).findByEmail(email);
+        verify(resetTokenRepository, never()).save(any());
+        verify(emailService, never()).enviarEmail(anyString(), anyString(), anyString());
+    }
+
+
+    @Test
+    void deveLancarExcecaoQuandoFalharAoEnviarEmail() {
+        String email = "teste@email.com";
+        Usuario usuario = new Usuario();
+        usuario.setEmail(email);
+
+        when(usuarioRepository.findByEmail(email)).thenReturn(Optional.of(usuario));
+        when(resetTokenRepository.save(any())).thenReturn(new PasswordResetToken());
+        doThrow(new RuntimeException("Erro ao enviar email"))
+                .when(emailService)
+                .enviarEmail(anyString(), anyString(), anyString());
+
+        assertThrows(RuntimeException.class, () -> {
+            authService.solicitarRedefinicaoSenha(email);
+        });
+
+        verify(resetTokenRepository, times(1)).save(any());
+        verify(emailService, times(1))
+                .enviarEmail(eq(email), anyString(), anyString());
+    }
+
 }

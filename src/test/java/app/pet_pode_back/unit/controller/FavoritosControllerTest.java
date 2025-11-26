@@ -1,6 +1,8 @@
 package app.pet_pode_back.unit.controller;
 
 import app.pet_pode_back.controller.FavoritosController;
+import app.pet_pode_back.exception.RegistroNaoEncontradoException;
+import app.pet_pode_back.exception.handler.RestExceptionHandler;
 import app.pet_pode_back.model.Plantas;
 import app.pet_pode_back.service.FavoritosService;
 import app.pet_pode_back.security.JwtUtil;
@@ -38,19 +40,24 @@ class FavoritosControllerTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(favoritosController).build();
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(favoritosController)
+                .setControllerAdvice(new RestExceptionHandler()) // ← ESSENCIAL
+                .build();
 
         usuarioId = UUID.randomUUID();
         plantaId = UUID.randomUUID();
     }
 
-
+    // ------------------------------------------------------------
+    // ADICIONAR FAVORITO
+    // ------------------------------------------------------------
 
     @Test
     void deveAdicionarFavoritoComSucesso() throws Exception {
         when(jwtUtil.extrairUsuarioId("token123")).thenReturn(usuarioId);
 
-        mockMvc.perform(put("/favoritos/" + plantaId)
+        mockMvc.perform(put("/favoritos/{id}", plantaId)
                         .header("Authorization", "Bearer token123"))
                 .andExpect(status().isOk());
 
@@ -59,16 +66,30 @@ class FavoritosControllerTest {
 
     @Test
     void deveRetornarErro400QuandoTokenNaoEnviadoNoAdicionar() throws Exception {
-        mockMvc.perform(put("/favoritos/" + plantaId))
+        mockMvc.perform(put("/favoritos/{id}", plantaId))
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void deveRetornar404QuandoUsuarioNaoExisteNoAdicionar() throws Exception {
+        when(jwtUtil.extrairUsuarioId("tokenXYZ")).thenReturn(usuarioId);
+        doThrow(new RegistroNaoEncontradoException("Usuário não encontrado"))
+                .when(favoritosService).adicionarFavorito(usuarioId, plantaId);
+
+        mockMvc.perform(put("/favoritos/{id}", plantaId)
+                        .header("Authorization", "Bearer tokenXYZ"))
+                .andExpect(status().isNotFound());
+    }
+
+    // ------------------------------------------------------------
+    // REMOVER FAVORITO
+    // ------------------------------------------------------------
 
     @Test
     void deveRemoverFavoritoComSucesso() throws Exception {
         when(jwtUtil.extrairUsuarioId("tokenABC")).thenReturn(usuarioId);
 
-        mockMvc.perform(delete("/favoritos/" + plantaId)
+        mockMvc.perform(delete("/favoritos/{id}", plantaId)
                         .header("Authorization", "Bearer tokenABC"))
                 .andExpect(status().isOk());
 
@@ -77,11 +98,24 @@ class FavoritosControllerTest {
 
     @Test
     void deveRetornarErro400QuandoTokenNaoEnviadoNoRemover() throws Exception {
-        mockMvc.perform(delete("/favoritos/" + plantaId))
+        mockMvc.perform(delete("/favoritos/{id}", plantaId))
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void deveRetornar404QuandoUsuarioNaoExisteNoRemover() throws Exception {
+        when(jwtUtil.extrairUsuarioId("tok123")).thenReturn(usuarioId);
+        doThrow(new RegistroNaoEncontradoException("Usuário não encontrado"))
+                .when(favoritosService).removerFavorito(usuarioId, plantaId);
 
+        mockMvc.perform(delete("/favoritos/{id}", plantaId)
+                        .header("Authorization", "Bearer tok123"))
+                .andExpect(status().isNotFound());
+    }
+
+    // ------------------------------------------------------------
+    // LISTAR FAVORITOS
+    // ------------------------------------------------------------
 
     @Test
     void deveListarFavoritosComSucesso() throws Exception {
@@ -105,5 +139,16 @@ class FavoritosControllerTest {
     void deveRetornarErro400QuandoTokenNaoEnviadoNoListar() throws Exception {
         mockMvc.perform(get("/favoritos"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void deveRetornar404QuandoUsuarioNaoExisteNoListar() throws Exception {
+        when(jwtUtil.extrairUsuarioId("tok3")).thenReturn(usuarioId);
+        doThrow(new RegistroNaoEncontradoException("Usuário não encontrado"))
+                .when(favoritosService).listarFavoritos(usuarioId);
+
+        mockMvc.perform(get("/favoritos")
+                        .header("Authorization", "Bearer tok3"))
+                .andExpect(status().isNotFound());
     }
 }

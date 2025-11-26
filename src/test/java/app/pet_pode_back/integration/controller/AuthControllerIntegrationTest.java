@@ -1,4 +1,4 @@
-package app.pet_pode_back.integration;
+package app.pet_pode_back.integration.controller;
 
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.UsuarioRepository;
@@ -327,6 +327,61 @@ public class AuthControllerIntegrationTest {
                   "novaSenha": ""
                 }
                 """;
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+    // -------------------------------
+// LOGIN – CAMPOS OBRIGATÓRIOS
+// -------------------------------
+    @Test
+    void deveFalharLoginSemEmailOuSenha() throws Exception {
+        String json = """
+            {
+              "email": "",
+              "senha": ""
+            }
+            """;
+
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+    // -------------------------------
+// REGISTRO – CAMPOS OBRIGATÓRIOS
+// -------------------------------
+    @Test
+    void deveFalharRegistroSemNomeEmailOuSenha() throws Exception {
+        String json = """
+            {
+              "nome": "",
+              "email": "",
+              "senha": ""
+            }
+            """;
+
+        mockMvc.perform(post("/auth/cadastro")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+    // -------------------------------
+// RESET PASSWORD – CAMPOS OBRIGATÓRIOS
+// -------------------------------
+    @Test
+    void deveFalharResetSenhaSemCampos() throws Exception {
+        String json = """
+            {
+              "codigo": "",
+              "novaSenha": ""
+            }
+            """;
 
         mockMvc.perform(post("/auth/reset-password")
                         .contentType(MediaType.APPLICATION_JSON)

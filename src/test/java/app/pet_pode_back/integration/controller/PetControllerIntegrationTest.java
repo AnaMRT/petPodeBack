@@ -1,4 +1,4 @@
-package app.pet_pode_back.integration;
+package app.pet_pode_back.integration.controller;
 
 import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.model.Usuario;

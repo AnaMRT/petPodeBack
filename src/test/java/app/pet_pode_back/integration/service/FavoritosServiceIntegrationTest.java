@@ -34,8 +34,6 @@ class FavoritosServiceIntegrationTest {
     @Autowired
     private PlantaRepository plantaRepository;
 
-    @MockBean
-    private JwtUtil jwtUtil;
 
     private Usuario usuario;
     private Plantas planta;
@@ -91,4 +89,20 @@ class FavoritosServiceIntegrationTest {
                 () -> favoritosService.adicionarFavorito(usuario.getId(), idInvalido));
         assertEquals("Planta não encontrada", ex.getMessage());
     }
+
+    @Test
+    void deveAdicionarEManterPersistenciaNoBanco() {
+        favoritosService.adicionarFavorito(usuario.getId(), planta.getId());
+
+        Usuario usuarioBanco = usuarioRepository.findById(usuario.getId()).orElseThrow();
+
+        assertEquals(1, usuarioBanco.getFavoritos().size());
+        assertTrue(usuarioBanco.getFavoritos().contains(planta));
+    }
+    @Test
+    void deveRetornarListaVaziaQuandoNaoExistemFavoritos() {
+        Set<Plantas> favoritos = favoritosService.listarFavoritos(usuario.getId());
+        assertTrue(favoritos.isEmpty());
+    }
+
 }

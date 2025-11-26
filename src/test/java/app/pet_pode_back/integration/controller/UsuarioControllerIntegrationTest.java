@@ -1,4 +1,4 @@
-package app.pet_pode_back.integration;
+package app.pet_pode_back.integration.controller;
 
 import app.pet_pode_back.dto.UsuarioUpdateDTO;
 import app.pet_pode_back.exception.SemPermissaoException;
@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.junit.jupiter.api.TestInstance;
 
 @SpringBootTest
 @ActiveProfiles("test")

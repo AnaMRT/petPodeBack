@@ -178,4 +178,33 @@ class AuthServiceIntegrationTest {
                 .isInstanceOf(ParametroInvalidoException.class)
                 .hasMessage("Código já foi utilizado.");
     }
+
+    // -------------------------------
+// REDEFINIÇÃO DE SENHA – TOKEN JÁ USADO
+// -------------------------------
+    @Test
+    void deveMarcarTokenComoUsadoAposRedefinirSenha() {
+        PasswordResetToken token = new PasswordResetToken();
+        token.setCodigo("333444");
+        token.setUsuario(usuarioPadrao);
+        token.setUsed(false);
+        token.setExpirationDate(LocalDateTime.now().plusMinutes(10));
+        tokenRepository.save(token);
+
+        authService.redefinirSenha("333444", "novaSenha123");
+
+        PasswordResetToken atualizado = tokenRepository.findByCodigo("333444").get();
+        assertThat(atualizado.isUsed()).isTrue(); // verifica se o token foi marcado como usado
+    }
+
+    // -------------------------------
+// REDIFINICAÇÃO – CAMPOS OBRIGATÓRIOS FALTANDO
+// -------------------------------
+    @Test
+    void deveFalharRedefinirSenhaSemCodigoOuSenha() {
+        assertThatThrownBy(() -> authService.redefinirSenha("", ""))
+                .isInstanceOf(ParametroInvalidoException.class)
+                .hasMessage("Código inválido.");
+    }
+
 }
