@@ -39,3 +39,4 @@ out/
 # Variáveis de ambiente (não subir para Git)
 .env
 .env.test
+

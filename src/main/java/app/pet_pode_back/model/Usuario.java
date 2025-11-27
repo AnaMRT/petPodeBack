@@ -25,7 +25,7 @@ public class Usuario {
     @Size(min = 2, max = 100, message = "O nome deve ter entre 2 e 100 caracteres.")
     private String nome;
     @NotBlank(message = "Email nao pode ser nulo")
-    @Size(min = 5, max = 25, message = "O email deve ter entre 5 e 25 caracteres.")
+    @Size(min = 5, max = 32, message = "O email deve ter entre 5 e 32 caracteres.")
     @Column(unique = true, nullable = false)
     @Email
     private String email;
