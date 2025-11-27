@@ -15,7 +15,6 @@ import java.util.UUID;
 @Entity
 @Table(name = "usuario")
 public class Usuario {
-
     @Id
     @GeneratedValue
     @Column

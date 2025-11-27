@@ -81,7 +81,6 @@ public class RestExceptionHandler {
 
         return buildResponse(HttpStatus.CONFLICT, mensagem, request);
     }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErroResponse> trataValidacoes(
             MethodArgumentNotValidException ex,
@@ -118,7 +117,6 @@ public class RestExceptionHandler {
                 request
         );
     }
-
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErroResponse> trataIllegalArgument(
             IllegalArgumentException ex,

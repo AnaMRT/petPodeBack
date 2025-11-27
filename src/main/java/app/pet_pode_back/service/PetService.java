@@ -32,7 +32,6 @@ public class PetService {
         pet.setUsuario(usuario);
         return petRepository.save(pet);
     }
-
     public List<Pet> listarPetsPorUsuario(UUID usuarioId) {
         return petRepository.findAllByUsuario_Id(usuarioId);
     }

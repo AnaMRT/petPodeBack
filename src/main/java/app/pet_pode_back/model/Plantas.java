@@ -47,7 +47,6 @@ public class Plantas {
         this.toxicaParaFelinos = toxicaParaFelinos;
         this.imagemUrl = imagemUrl;
     }
-
     public void setNomePopular(String nomePopular) {
         this.nomePopular = nomePopular;
     }

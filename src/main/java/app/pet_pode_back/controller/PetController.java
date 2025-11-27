@@ -51,7 +51,7 @@ public class PetController {
     @PutMapping("/{id}")
     public ResponseEntity<Pet> editar(
             @PathVariable UUID id,
-            @Valid  @RequestBody PetUpdateDTO dto,
+            @Valid @RequestBody PetUpdateDTO dto,
             @RequestHeader("Authorization") String token) {
 
         UUID usuarioId = jwtUtil.extrairUsuarioId(token.replace("Bearer ", ""));
