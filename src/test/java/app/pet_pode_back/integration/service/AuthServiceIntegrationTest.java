@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@TestPropertySource(locations = "classpath:.env.test")
+@TestPropertySource(locations = "classpath:.env.exemplo.test")
 class AuthServiceIntegrationTest {
 
     @Autowired

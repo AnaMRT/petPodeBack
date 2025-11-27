@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @ActiveProfiles("test")
-@TestPropertySource(locations = "classpath:.env.test")
+@TestPropertySource(locations = "classpath:.env.exemplo.test")
 @AutoConfigureMockMvc
 public class PlantasControllerIntegrationTest {
 

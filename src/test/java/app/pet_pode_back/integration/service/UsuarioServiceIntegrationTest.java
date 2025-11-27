@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.*;
 @ActiveProfiles("test")
 @Transactional
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@TestPropertySource(locations = "classpath:.env.test")
+@TestPropertySource(locations = "classpath:.env.exemplo.test")
 class UsuarioServiceIntegrationTest {
 
     @Autowired
