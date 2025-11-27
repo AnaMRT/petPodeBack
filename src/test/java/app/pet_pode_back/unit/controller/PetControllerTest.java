@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -207,5 +208,69 @@ class PetControllerTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.mensagem").value("Erro inesperado. Tente novamente."));
     }
+
+    @Test
+    void deveRetornarNotFoundQuandoPetNaoExisteNoUpload() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "pet.jpg", "image/jpeg", "conteudo".getBytes()
+        );
+
+        when(petService.atualizarImagemPet(eq(petId), eq(usuarioId), any()))
+                .thenThrow(new PetNotFoundException("Pet não encontrado."));
+
+        mockMvc.perform(multipart("/pet/" + petId + "/imagem")
+                        .file(file)
+                        .with(req -> { req.setMethod("PUT"); return req; })
+                        .header("Authorization", "Bearer token"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Pet não encontrado."));
+    }
+
+    @Test
+    void deveRetornarErroInternoQuandoFalhaUpload() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "pet.jpg", "image/jpeg", "conteudo".getBytes()
+        );
+
+        when(petService.atualizarImagemPet(eq(petId), eq(usuarioId), any()))
+                .thenThrow(new IOException("Falha no upload"));
+
+        mockMvc.perform(multipart("/pet/" + petId + "/imagem")
+                        .file(file)
+                        .with(req -> { req.setMethod("PUT"); return req; })
+                        .header("Authorization", "Bearer token"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.mensagem").value("Erro inesperado. Tente novamente."));
+    }
+
+    @Test
+    void deveRetornarBadRequestQuandoPetNomeInvalidoNoCadastro() throws Exception {
+        Pet petInvalido = new Pet();
+        petInvalido.setNome("A"); // inválido
+
+        mockMvc.perform(post("/pet")
+                        .header("Authorization", "Bearer token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(petInvalido)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem",
+                        org.hamcrest.Matchers.containsString("O nome deve ter entre 2 e 100 caracteres")));
+    }
+
+    @Test
+    void deveRetornarBadRequestQuandoNomeInvalidoNaEdicao() throws Exception {
+
+        PetUpdateDTO dto = new PetUpdateDTO();
+        dto.setNome("A"); // Nome muito curto (inválido)
+
+        mockMvc.perform(put("/pet/" + petId)
+                        .header("Authorization", "Bearer token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem",
+                        org.hamcrest.Matchers.containsString("O nome deve ter entre 2 e 100 caracteres")));
+    }
+
 
 }

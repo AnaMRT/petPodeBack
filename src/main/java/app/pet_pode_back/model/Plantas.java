@@ -31,10 +31,8 @@ public class Plantas {
     private Boolean toxicaParaFelinos;
     @Column
     private String imagemUrl;
-
     public Plantas() {
     }
-
     public Plantas(UUID id, String nomePopular,
                    String nomeCientifico, String descricao,
                    Boolean toxicaParaCaninos,

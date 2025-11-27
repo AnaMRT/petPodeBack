@@ -162,6 +162,16 @@ public class PlantasControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].nomePopular").value("Rosa"));
     }
+    @Test
+    void deveRetornarErroQuandoUsuarioNaoForEncontrado() throws Exception {
+        Mockito.when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuario.getId());
+        Mockito.when(usuarioService.buscarUsuarioPorId(usuario.getId()))
+                .thenThrow(new RuntimeException("Usuário não encontrado"));
 
+        mockMvc.perform(get("/plantas/search")
+                        .header("Authorization", "Bearer tokenFake")
+                        .param("termo", "Rosa"))
+                .andExpect(status().is5xxServerError());
+    }
 
 }

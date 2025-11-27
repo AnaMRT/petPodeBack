@@ -148,4 +148,5 @@ class PlantaServiceIntegrationTest {
         assertThat(resultado).contains(planta2); // toxica para caninos
     }
 
+
 }

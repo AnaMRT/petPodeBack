@@ -67,7 +67,6 @@ public class PetController {
         String url = petService.atualizarImagemPet(id, usuarioId, file);
         return ResponseEntity.ok(Map.of("imagemUrl", url));
     }
-
 }
 
 

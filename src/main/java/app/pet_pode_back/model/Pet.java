@@ -27,7 +27,6 @@ public class Pet {
     @JoinColumn(name = "usuario_id")
     @JsonBackReference
     private Usuario usuario;
-
     public Pet() {
     }
     public Pet(UUID id, String nome, String especie, Usuario usuario) {
@@ -71,7 +70,6 @@ public class Pet {
     public String getImagemPublicId() {
         return imagemPublicId;
     }
-
     public void setImagemPublicId(String imagemPublicId) {
         this.imagemPublicId = imagemPublicId;
     }
@@ -79,7 +77,6 @@ public class Pet {
     public Usuario getUsuario() {
         return usuario;
     }
-
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
     }

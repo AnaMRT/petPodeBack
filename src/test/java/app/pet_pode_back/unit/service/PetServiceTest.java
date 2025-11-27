@@ -247,4 +247,44 @@ class PetServiceTest {
         verify(uploader, never()).upload(any(), any());
     }
 
+    @Test
+    void deveExcluirPetComSucesso() {
+        when(petRepository.findById(pet.getId()))
+                .thenReturn(Optional.of(pet));
+
+        assertDoesNotThrow(() ->
+                petService.excluirPetDoUsuario(usuario.getId(), pet.getId())
+        );
+
+        verify(petRepository).delete(pet);
+    }
+
+    @Test
+    void deveDeletarImagemAntigaAntesDeAtualizar() throws Exception {
+        pet.setImagemPublicId("old-img");
+
+        when(petRepository.findById(pet.getId()))
+                .thenReturn(Optional.of(pet));
+
+        when(file.getBytes()).thenReturn("img".getBytes());
+        when(uploader.upload(any(), any()))
+                .thenReturn(Map.of("secure_url", "x", "public_id", "y"));
+
+        petService.atualizarImagemPet(pet.getId(), usuario.getId(), file);
+
+        verify(uploader).destroy(eq("old-img"), any());
+    }
+
+    @Test
+    void deveRetornarMensagemCorretaQuandoUsuarioNaoEncontrado() {
+        when(usuarioRepository.findById(any()))
+                .thenReturn(Optional.empty());
+
+        RegistroNaoEncontradoException ex =
+                assertThrows(RegistroNaoEncontradoException.class,
+                        () -> petService.salvarPet(pet, UUID.randomUUID()));
+
+        assertEquals("Usuário não encontrado.", ex.getMessage());
+    }
+
 }

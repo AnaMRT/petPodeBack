@@ -67,7 +67,6 @@ public class PetService {
 
         return pet.getImagemUrl();
     }
-
     private void excluirImagemDoCloud(UUID petId, Pet pet) {
 
         if (pet.getImagemPublicId() != null) {

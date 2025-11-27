@@ -51,15 +51,12 @@ public class Usuario {
     public Set<Plantas> getFavoritos() {
         return favoritos;
     }
-
     public void addFavorito(Plantas planta) {
         this.favoritos.add(planta);
     }
-
     public void removeFavorito(Plantas planta) {
         this.favoritos.remove(planta);
     }
-
     public Usuario() {
     }
 
