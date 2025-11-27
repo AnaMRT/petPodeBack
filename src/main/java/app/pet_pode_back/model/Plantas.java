@@ -35,7 +35,10 @@ public class Plantas {
     public Plantas() {
     }
 
-    public Plantas(UUID id, String nomePopular, String nomeCientifico, String descricao, Boolean toxicaParaCaninos, Boolean toxicaParaFelinos, String imagemUrl) {
+    public Plantas(UUID id, String nomePopular,
+                   String nomeCientifico, String descricao,
+                   Boolean toxicaParaCaninos,
+                   Boolean toxicaParaFelinos, String imagemUrl) {
         this.id = id;
         this.nomePopular = nomePopular;
         this.nomeCientifico = nomeCientifico;

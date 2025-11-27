@@ -119,6 +119,14 @@ public class RestExceptionHandler {
         );
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErroResponse> trataIllegalArgument(
+            IllegalArgumentException ex,
+            HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErroResponse> trataErroGenerico(
             Exception ex,
@@ -134,12 +142,5 @@ public class RestExceptionHandler {
         );
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErroResponse> trataIllegalArgument(
-            IllegalArgumentException ex,
-            HttpServletRequest request) {
-        // Pode ser 400 se considerar erro de parâmetro
-        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
-    }
 
 }

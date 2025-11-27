@@ -52,14 +52,18 @@ public class Usuario {
     public Set<Plantas> getFavoritos() {
         return favoritos;
     }
+
     public void addFavorito(Plantas planta) {
         this.favoritos.add(planta);
     }
+
     public void removeFavorito(Plantas planta) {
         this.favoritos.remove(planta);
     }
+
     public Usuario() {
     }
+
     public Usuario(UUID id, String nome, String email, List<Pet> pets, String senha, String resetToken) {
         this.id = id;
         this.nome = nome;
@@ -76,48 +80,63 @@ public class Usuario {
     public UUID getId() {
         return id;
     }
+
     public void setId(UUID id) {
         this.id = id;
     }
+
     public String getNome() {
         return nome;
     }
+
     public void setNome(String nome) {
         this.nome = nome;
     }
+
     public List<Pet> getPets() {
         return pets;
     }
+
     public void setPets(List<Pet> pets) {
         this.pets = pets;
     }
+
     public String getEmail() {
         return email;
     }
+
     public void setEmail(String email) {
         this.email = email == null ? null : email.toLowerCase();
     }
+
     public String getSenha() {
         return senha;
     }
+
     public void setSenha(String senha) {
         this.senha = senha;
     }
+
     public String getResetToken() {
         return resetToken;
     }
+
     public void setResetToken(String resetToken) {
         this.resetToken = resetToken;
     }
+
     public String getImagemUrl() {
         return imagemUrl;
     }
+
     public void setImagemUrl(String imagemUrl) {
         this.imagemUrl = imagemUrl;
     }
+
     public String getImagemPublicId() {
         return imagemPublicId;
     }
+
     public void setImagemPublicId(String imagemPublicId) {
         this.imagemPublicId = imagemPublicId;
     }
