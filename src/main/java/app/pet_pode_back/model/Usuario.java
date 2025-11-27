@@ -127,11 +127,11 @@ public class Usuario {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Usuario usuario = (Usuario) o;
-        return Objects.equals(id, usuario.id) && Objects.equals(nome, usuario.nome) && Objects.equals(email, usuario.email) && Objects.equals(pets, usuario.pets) && Objects.equals(senha, usuario.senha) && Objects.equals(resetToken, usuario.resetToken) && Objects.equals(imagemUrl, usuario.imagemUrl) && Objects.equals(imagemPublicId, usuario.imagemPublicId) && Objects.equals(favoritos, usuario.favoritos);
+        return Objects.equals(id, usuario.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, nome, email, pets, senha, resetToken, imagemUrl, imagemPublicId, favoritos);
+        return Objects.hash(id);
     }
 }

@@ -4,6 +4,7 @@ import app.pet_pode_back.dto.PetUpdateDTO;
 import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.security.JwtUtil;
 import app.pet_pode_back.service.PetService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +25,7 @@ public class PetController {
     private JwtUtil jwtUtil;
 
     @PostMapping
-    public ResponseEntity<Pet> cadastrarPet(
+    public ResponseEntity<Pet> cadastrarPet( @Valid
             @RequestBody Pet pet,
             @RequestHeader("Authorization") String token) {
 
@@ -48,7 +49,7 @@ public class PetController {
         return ResponseEntity.noContent().build();
     }
     @PutMapping("/{id}")
-    public ResponseEntity<Pet> editar(
+    public ResponseEntity<Pet> editar( @Valid
             @PathVariable UUID id,
             @RequestBody PetUpdateDTO dto,
             @RequestHeader("Authorization") String token) {

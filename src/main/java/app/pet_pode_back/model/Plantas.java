@@ -10,6 +10,11 @@ import java.util.UUID;
 @Entity
 @Table(name = "plantas")
 public class Plantas {
+
+    @Id
+    @GeneratedValue
+    @Column
+    private UUID id;
     @Column
     @NotBlank(message = "O nome popular é obrigatório.")
     private String nomePopular;
@@ -26,20 +31,18 @@ public class Plantas {
     private Boolean toxicaParaFelinos;
     @Column
     private String imagemUrl;
-    @Id
-    @GeneratedValue
-    @Column
-    private UUID id;
+
     public Plantas() {
     }
-    public Plantas(String nomePopular, String nomeCientifico, String descricao, Boolean toxicaParaFelinos, Boolean toxicaParaCaninos, String imagemUrl, UUID id) {
+
+    public Plantas(UUID id, String nomePopular, String nomeCientifico, String descricao, Boolean toxicaParaCaninos, Boolean toxicaParaFelinos, String imagemUrl) {
+        this.id = id;
         this.nomePopular = nomePopular;
         this.nomeCientifico = nomeCientifico;
         this.descricao = descricao;
-        this.toxicaParaFelinos = toxicaParaFelinos;
         this.toxicaParaCaninos = toxicaParaCaninos;
+        this.toxicaParaFelinos = toxicaParaFelinos;
         this.imagemUrl = imagemUrl;
-        this.id = id;
     }
 
     public void setNomePopular(String nomePopular) {
@@ -103,12 +106,12 @@ public class Plantas {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Plantas plantas = (Plantas) o;
-        return Objects.equals(nomePopular, plantas.nomePopular) && Objects.equals(nomeCientifico, plantas.nomeCientifico) && Objects.equals(descricao, plantas.descricao) && Objects.equals(toxicaParaCaninos, plantas.toxicaParaCaninos) && Objects.equals(toxicaParaFelinos, plantas.toxicaParaFelinos) && Objects.equals(imagemUrl, plantas.imagemUrl) && Objects.equals(id, plantas.id);
+        return Objects.equals(id, plantas.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(nomePopular, nomeCientifico, descricao, toxicaParaCaninos, toxicaParaFelinos, imagemUrl, id);
+        return Objects.hash(id);
     }
 }
 

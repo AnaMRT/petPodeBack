@@ -76,7 +76,6 @@ public class PetService {
                 cloudinary.uploader().destroy(pet.getImagemPublicId(), ObjectUtils.emptyMap());
             } catch (Exception e) { System.out.println("Erro ao remover imagem do Cloudinary: " + e.getMessage()); } }
 
-        petRepository.delete(pet);
 
         try {
             cloudinary.api().deleteFolder("pets/" + petId, ObjectUtils.emptyMap());

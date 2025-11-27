@@ -90,11 +90,11 @@ public class Pet {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Pet pet = (Pet) o;
-        return Objects.equals(id, pet.id) && Objects.equals(nome, pet.nome) && Objects.equals(especie, pet.especie) && Objects.equals(imagemUrl, pet.imagemUrl) && Objects.equals(imagemPublicId, pet.imagemPublicId) && Objects.equals(usuario, pet.usuario);
+        return Objects.equals(id, pet.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, nome, especie, imagemUrl, imagemPublicId, usuario);
+        return Objects.hash(id);
     }
 }
