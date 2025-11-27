@@ -28,7 +28,7 @@ import org.junit.jupiter.api.TestInstance;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@TestPropertySource(locations = "classpath:.env.exemplo.test")
+@TestPropertySource(locations = "classpath:.env.test")
 @AutoConfigureMockMvc
 public class UsuarioControllerIntegrationTest {
 

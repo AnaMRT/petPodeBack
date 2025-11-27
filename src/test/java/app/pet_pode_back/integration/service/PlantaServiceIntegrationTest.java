@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@TestPropertySource(locations = "classpath:.env.exemplo.test")
+@TestPropertySource(locations = "classpath:.env.test")
 class PlantaServiceIntegrationTest {
 
     @Autowired

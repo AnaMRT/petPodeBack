@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional // garante rollback automático após cada teste
-@TestPropertySource(locations = "classpath:.env.exemplo.test")
+@TestPropertySource(locations = "classpath:.env.test")
 class FavoritosServiceIntegrationTest {
 
     @Autowired

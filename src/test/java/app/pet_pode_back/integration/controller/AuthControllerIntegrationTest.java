@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @ActiveProfiles("test")
-@TestPropertySource(locations = "classpath:.env.exemplo.test")
+@TestPropertySource(locations = "classpath:.env.test")
 @AutoConfigureMockMvc
 public class AuthControllerIntegrationTest {
 
