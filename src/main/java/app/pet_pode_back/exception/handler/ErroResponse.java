@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class ErroResponse {
-
     private int codigo;
     private String mensagem;
     private String path;

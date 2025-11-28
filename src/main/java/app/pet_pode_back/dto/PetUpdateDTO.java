@@ -28,15 +28,4 @@ public class PetUpdateDTO {
         this.especie = especie;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        PetUpdateDTO that = (PetUpdateDTO) o;
-        return Objects.equals(nome, that.nome) && Objects.equals(especie, that.especie);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(nome, especie);
-    }
 }

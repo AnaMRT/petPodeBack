@@ -18,6 +18,17 @@ public class PasswordResetToken {
     @Column(nullable = false)
     private boolean used = false;
 
+    public PasswordResetToken() {
+    }
+
+    public PasswordResetToken(Long id, String codigo, Usuario usuario, LocalDateTime expirationDate, boolean used) {
+        this.id = id;
+        this.codigo = codigo;
+        this.usuario = usuario;
+        this.expirationDate = expirationDate;
+        this.used = used;
+    }
+
     public Long getId() {
         return id;
     }

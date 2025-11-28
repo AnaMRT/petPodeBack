@@ -7,7 +7,6 @@ import app.pet_pode_back.repository.PlantaRepository;
 import app.pet_pode_back.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.Set;
 import java.util.UUID;
 @Service

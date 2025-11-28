@@ -26,7 +26,7 @@ public class PetController {
 
     @PostMapping
     public ResponseEntity<Pet> cadastrarPet(
-            @Valid  @RequestBody Pet pet,
+            @Valid @RequestBody Pet pet,
             @RequestHeader("Authorization") String token) {
 
         UUID usuarioId = jwtUtil.extrairUsuarioId(token.replace("Bearer ", ""));

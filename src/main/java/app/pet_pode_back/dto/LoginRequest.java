@@ -11,12 +11,12 @@ public class LoginRequest {
     @NotBlank(message = "A senha é obrigatória")
     private String senha;
 
+    public LoginRequest() {
+    }
+
     public LoginRequest(String email, String senha) {
         this.email = email;
         this.senha = senha;
-    }
-
-    public LoginRequest() {
     }
 
     public String getEmail() {

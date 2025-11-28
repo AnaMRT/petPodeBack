@@ -3,7 +3,6 @@ package app.pet_pode_back.model;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
-
 import java.util.Objects;
 import java.util.UUID;
 

@@ -9,12 +9,10 @@ public class UsuarioUpdateDTO {
     @NotBlank(message = "Nome nao pode ser nulo")
     @Size(min = 2, max = 100, message = "O nome deve ter entre 2 e 100 caracteres.")
     private String nome;
-
     @NotBlank(message = "Email nao pode ser nulo")
     @Size(min = 5, max = 25, message = "O email deve ter entre 5 e 25 caracteres.")
     @Email
     private String email;
-
     private String senha;
     private String confirmarSenha;
     private String senhaAtual;
