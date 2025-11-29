@@ -106,5 +106,43 @@ class FavoritosServiceIntegrationTest {
         Set<Plantas> favoritos = favoritosService.listarFavoritos(usuario.getId());
         assertTrue(favoritos.isEmpty());
     }
+    @Test
+    void deveAdicionarMesmaPlantaApenasUmaVez() {
+        favoritosService.adicionarFavorito(usuario.getId(), planta.getId());
+        favoritosService.adicionarFavorito(usuario.getId(), planta.getId()); // segunda vez
+
+        Set<Plantas> favoritos = favoritosService.listarFavoritos(usuario.getId());
+        assertEquals(1, favoritos.size(), "A planta não deve ser duplicada");
+        assertTrue(favoritos.contains(planta));
+    }
+
+    @Test
+    void deveRemoverPlantaQueNaoEstaNosFavoritosSemErro() {
+        // planta ainda não está nos favoritos
+        favoritosService.removerFavorito(usuario.getId(), planta.getId());
+
+        Set<Plantas> favoritos = favoritosService.listarFavoritos(usuario.getId());
+        assertTrue(favoritos.isEmpty(), "Favoritos devem continuar vazios");
+    }
+
+    @Test
+    void deveListarFavoritosComMaisDeUmFavorito() {
+        // cria segunda planta
+        Plantas planta2 = new Plantas();
+        planta2.setNomeCientifico("Outra Planta Científica");
+        planta2.setNomePopular("Outra Planta Popular");
+        planta2.setDescricao("Descrição");
+        planta2.setToxicaParaCaninos(false);
+        planta2.setToxicaParaFelinos(false);
+        planta2 = plantaRepository.save(planta2);
+
+        favoritosService.adicionarFavorito(usuario.getId(), planta.getId());
+        favoritosService.adicionarFavorito(usuario.getId(), planta2.getId());
+
+        Set<Plantas> favoritos = favoritosService.listarFavoritos(usuario.getId());
+        assertEquals(2, favoritos.size());
+        assertTrue(favoritos.contains(planta));
+        assertTrue(favoritos.contains(planta2));
+    }
 
 }

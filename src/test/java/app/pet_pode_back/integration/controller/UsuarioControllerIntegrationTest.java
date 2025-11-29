@@ -1,172 +1,209 @@
 package app.pet_pode_back.integration.controller;
 
 import app.pet_pode_back.dto.UsuarioUpdateDTO;
-import app.pet_pode_back.exception.SemPermissaoException;
 import app.pet_pode_back.model.Usuario;
-import app.pet_pode_back.service.UsuarioService;
+import app.pet_pode_back.repository.UsuarioRepository;
 import app.pet_pode_back.security.JwtUtil;
 import com.cloudinary.Cloudinary;
+import com.cloudinary.Uploader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.*;
+import java.util.Map;
+import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import org.junit.jupiter.api.TestInstance;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@TestPropertySource(locations = "classpath:.env.test")
+@TestPropertySource("classpath:.env.test")
 @AutoConfigureMockMvc
-public class UsuarioControllerIntegrationTest {
+class UsuarioControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
-    private UsuarioService usuarioService;
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
-    @MockBean
+    // JwtUtil real — apenas injetamos
+    @Autowired
     private JwtUtil jwtUtil;
 
-    @MockBean
-    private Cloudinary cloudinary;
 
-    private UUID usuarioId;
+    private Usuario usuario;
     private String token;
 
     @BeforeEach
     void setup() {
-        usuarioId = UUID.randomUUID();
-        token = "Bearer exemploToken";
+        usuarioRepository.deleteAll();
+
+        usuario = new Usuario();
+        usuario.setNome("Rafa");
+        usuario.setEmail("teste@teste.com");
+        usuario.setSenha("123456");
+        usuario = usuarioRepository.save(usuario);
+
+        // token REAL gerado pelo JwtUtil
+        token = "Bearer " + jwtUtil.gerarToken(usuario.getId());
     }
 
-    // ------------------------------------------------------------
-    // GET /usuario
-    // ------------------------------------------------------------
+
+
     @Test
     void deveListarUsuarios() throws Exception {
-        Usuario u = new Usuario();
-        u.setId(usuarioId);
-
-        when(usuarioService.listarTodos()).thenReturn(List.of(u));
-
         mockMvc.perform(get("/usuario"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(usuarioId.toString()));
+                .andExpect(jsonPath("$[0].id").value(usuario.getId().toString()));
     }
 
-    // ------------------------------------------------------------
+    // ----------------------------------------------------
     // PUT /usuario (happy path)
-    // ------------------------------------------------------------
+    // ----------------------------------------------------
     @Test
     void deveEditarUsuario() throws Exception {
-        UsuarioUpdateDTO dto = new UsuarioUpdateDTO("Rafa", "teste@teste.com", "123", "123", "1234");
-        Usuario atualizado = new Usuario();
-        atualizado.setId(usuarioId);
+        mockMvc.perform(put("/usuario")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nome": "Novo Nome",
+                                  "email": "novoemail@teste.com"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(usuario.getId().toString()));
 
-        when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuarioId);
-        when(usuarioService.editarUsuario(any(), any())).thenReturn(atualizado);
+        Usuario atualizado = usuarioRepository.findById(usuario.getId()).orElseThrow();
+        assert atualizado.getNome().equals("Novo Nome");
+        assert atualizado.getEmail().equals("novoemail@teste.com");
+    }
+
+    // ----------------------------------------------------
+    // PUT /usuario — DTO inválido
+    // ----------------------------------------------------
+    @Test
+    void deveRetornar400DTOInvalido() throws Exception {
+        mockMvc.perform(put("/usuario")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nome": "",
+                                  "email": ""
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value(400))
+                .andExpect(jsonPath("$.path").value("/usuario"));
+    }
+
+    // ----------------------------------------------------
+    // DELETE /usuario
+    // ----------------------------------------------------
+    @Test
+    void deveRemoverUsuario() throws Exception {
+        mockMvc.perform(delete("/usuario")
+                        .header("Authorization", token))
+                .andExpect(status().isNoContent());
+
+        assert usuarioRepository.count() == 0;
+    }
+
+    // ----------------------------------------------------
+    // GET /usuario/logado
+    // ----------------------------------------------------
+    @Test
+    void deveRetornarUsuarioLogado() throws Exception {
+        mockMvc.perform(get("/usuario/logado")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(usuario.getId().toString()));
+    }
+
+    @Test
+    void deveRetornar404QuandoEditarUsuarioInexistente() throws Exception {
+        UUID idInexistente = UUID.randomUUID();
+
+        mockMvc.perform(put("/usuario")
+                        .header("Authorization", "Bearer " + jwtUtil.gerarToken(idInexistente))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "nome": "Novo Nome",
+                              "email": "novo@email.com"
+                            }
+                            """))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
+    }
+
+
+
+
+
+    @Test
+    void deveRetornar404AoEditarUsuarioInexistente() throws Exception {
+        UUID idInexistente = UUID.randomUUID();
+        String tokenInexistente = "Bearer " + jwtUtil.gerarToken(idInexistente);
+
+        mockMvc.perform(put("/usuario")
+                        .header("Authorization", tokenInexistente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "nome": "Novo Nome",
+                                    "email": "novo@email.com"
+                                }
+                                """))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
+    }
+
+    @Test
+    void deveRetornar409AoEditarUsuarioComEmailDuplicado() throws Exception {
+        Usuario outroUsuario = new Usuario();
+        outroUsuario.setNome("Outro");
+        outroUsuario.setEmail("outro@email.com");
+        outroUsuario.setSenha("123456");
+        usuarioRepository.save(outroUsuario);
 
         mockMvc.perform(put("/usuario")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                    "nome": "Rafa",
-                                    "email": "teste@teste.com"
+                                    "nome": "Rafaela",
+                                    "email": "outro@email.com"
                                 }
                                 """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(usuarioId.toString()));
-    }
-
-    // ------------------------------------------------------------
-    // PUT /usuario — token inválido (cai no seu ControllerAdvice)
-    // ------------------------------------------------------------
-    @Test
-    void deveRetornar403QuandoTokenInvalidoNoEditar() throws Exception {
-        when(jwtUtil.extrairUsuarioId(anyString()))
-                .thenThrow(new SemPermissaoException("Token inválido ou expirado"));
-
-        mockMvc.perform(put("/usuario")
-                        .header("Authorization", token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"nome": "Rafa", "email": "teste@teste.com"}
-                                """))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.mensagem").value("Token inválido ou expirado"))
-                .andExpect(jsonPath("$.codigo").value(403))
-                .andExpect(jsonPath("$.path").value("/usuario"));
-    }
-
-    // ------------------------------------------------------------
-    // PUT /usuario — DTO inválido
-    // ------------------------------------------------------------
-    @Test
-    void deveRetornar400QuandoDTOInvalido() throws Exception {
-        // JWT válido
-        when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuarioId);
-
-        mockMvc.perform(put("/usuario")
-                        .header("Authorization", token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"nome": "", "email": ""}
-                                """))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.codigo").value(400))
-                .andExpect(jsonPath("$.mensagem").exists())
-                .andExpect(jsonPath("$.path").value("/usuario"));
-    }
-
-    // ------------------------------------------------------------
-    // DELETE /usuario
-    // ------------------------------------------------------------
-    @Test
-    void deveRemoverUsuario() throws Exception {
-        when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuarioId);
-
-        mockMvc.perform(delete("/usuario")
-                        .header("Authorization", token))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.mensagem")
+                        .value("Operação inválida: já existe um registro com esses dados."));
     }
 
     @Test
-    void deveRetornar403QuandoTokenInvalidoNoDelete() throws Exception {
-        when(jwtUtil.extrairUsuarioId(anyString()))
-                .thenThrow(new SemPermissaoException("Token inválido ou expirado"));
-
-        mockMvc.perform(delete("/usuario")
-                        .header("Authorization", token))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.mensagem").value("Token inválido ou expirado"))
-                .andExpect(jsonPath("$.codigo").value(403))
-                .andExpect(jsonPath("$.path").value("/usuario"));
-    }
-
-
-    @Test
-    void deveRetornarUsuarioLogado() throws Exception {
-        when(usuarioService.getUsuarioLogado(anyString()))
-                .thenReturn(Map.of("id", usuarioId.toString()));
+    void deveRetornar404AoBuscarUsuarioLogadoInexistente() throws Exception {
+        UUID idInexistente = UUID.randomUUID();
+        String tokenInexistente = "Bearer " + jwtUtil.gerarToken(idInexistente);
 
         mockMvc.perform(get("/usuario/logado")
-                        .header("Authorization", token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(usuarioId.toString()));
+                        .header("Authorization", tokenInexistente))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
     }
+
+
 }

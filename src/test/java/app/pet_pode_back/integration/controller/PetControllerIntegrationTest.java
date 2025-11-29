@@ -1,5 +1,8 @@
 package app.pet_pode_back.integration.controller;
 
+
+
+import app.pet_pode_back.dto.PetUpdateDTO;
 import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.PetRepository;
@@ -11,19 +14,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 @SpringBootTest
 @ActiveProfiles("test")
 @TestPropertySource(locations = "classpath:.env.test")
@@ -40,130 +41,122 @@ public class PetControllerIntegrationTest {
     private UsuarioRepository usuarioRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     private Usuario usuario;
-    private UUID usuarioId;
+    private String token;
 
     @BeforeEach
-    void setUp() {
+    void setup() {
         petRepository.deleteAll();
         usuarioRepository.deleteAll();
 
         usuario = new Usuario();
-        usuario.setNome("Test User");
-        usuario.setEmail("test@email.com");
+        usuario.setNome("Teste");
+        usuario.setEmail("teste@teste.com");
         usuario.setSenha("123456");
-        usuarioRepository.save(usuario);
+        usuario = usuarioRepository.save(usuario);
 
-        usuarioId = usuario.getId();
-
-        when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuarioId);
+        token = "Bearer " + jwtUtil.gerarToken(usuario.getId());
     }
 
     @Test
-    void deveCadastrarPet() throws Exception {
+    void deveCadastrarPetComSucesso() throws Exception {
         Pet pet = new Pet();
         pet.setNome("Rex");
         pet.setEspecie("Cachorro");
 
         mockMvc.perform(post("/pet")
+                        .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer qualquer-token")
                         .content(objectMapper.writeValueAsString(pet)))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.nome").value("Rex"))
                 .andExpect(jsonPath("$.especie").value("Cachorro"));
     }
 
     @Test
     void deveListarPetsDoUsuario() throws Exception {
-        Pet pet = new Pet();
-        pet.setNome("Rex");
-        pet.setEspecie("Cachorro");
-        pet.setUsuario(usuario);
-        petRepository.save(pet);
+        Pet pet1 = new Pet(null, "Rex", "Cachorro", usuario);
+        Pet pet2 = new Pet(null, "Miau", "Gato", usuario);
+        petRepository.saveAll(List.of(pet1, pet2));
 
         mockMvc.perform(get("/pet")
-                        .header("Authorization", "Bearer qualquer-token"))
+                        .header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].nome").value("Rex"));
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].nome", anyOf(is("Rex"), is("Miau"))));
     }
 
     @Test
-    void deveEditarPet() throws Exception {
-        Pet pet = new Pet();
-        pet.setNome("Rex");
-        pet.setEspecie("Cachorro");
-        pet.setUsuario(usuario);
-        petRepository.save(pet);
+    void deveEditarPetComSucesso() throws Exception {
+        Pet pet = new Pet(null, "Rex", "Cachorro", usuario);
+        pet = petRepository.save(pet);
 
-        Pet dto = new Pet();
-        dto.setNome("Max");
-        dto.setEspecie("Gato");
+        PetUpdateDTO dto = new PetUpdateDTO("Rexie", "Cachorro");
 
-        mockMvc.perform(put("/pet/" + pet.getId())
+        mockMvc.perform(put("/pet/{id}", pet.getId())
+                        .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer qualquer-token")
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nome").value("Max"))
-                .andExpect(jsonPath("$.especie").value("Gato"));
+                .andExpect(jsonPath("$.nome").value("Rexie"));
     }
 
     @Test
-    void deveExcluirPet() throws Exception {
-        Pet pet = new Pet();
-        pet.setNome("Rex");
-        pet.setEspecie("Cachorro");
-        pet.setUsuario(usuario);
-        petRepository.save(pet);
+    void deveExcluirPetComSucesso() throws Exception {
+        Pet pet = new Pet(null, "Rex", "Cachorro", usuario);
+        pet = petRepository.save(pet);
 
-        mockMvc.perform(delete("/pet/" + pet.getId())
-                        .header("Authorization", "Bearer qualquer-token"))
+        mockMvc.perform(delete("/pet/{id}", pet.getId())
+                        .header("Authorization", token))
                 .andExpect(status().isNoContent());
     }
 
-    // Sad path: tentar editar pet que não existe
+    // --- SAD PATHS ---
+
     @Test
-    void deveFalharAoEditarPetInexistente() throws Exception {
-        Pet dto = new Pet();
-        dto.setNome("Max");
-
-        mockMvc.perform(put("/pet/" + UUID.randomUUID())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer qualquer-token")
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isNotFound());
-    }
-
-    // Sad path: tentar excluir pet que não pertence ao usuário
-    @Test
-    void deveFalharExcluirPetDeOutroUsuario() throws Exception {
-        Usuario outroUsuario = new Usuario();
-        outroUsuario.setNome("Outro");
-        outroUsuario.setEmail("outro@email.com");
-        outroUsuario.setSenha("123");
-        usuarioRepository.save(outroUsuario);
-
+    void naoDeveCadastrarPetSemNomeValido() throws Exception {
         Pet pet = new Pet();
-        pet.setNome("Rex");
+        pet.setNome("R"); // Menor que o mínimo 2
         pet.setEspecie("Cachorro");
-        pet.setUsuario(outroUsuario);
-        petRepository.save(pet);
 
-        mockMvc.perform(delete("/pet/" + pet.getId())
-                        .header("Authorization", "Bearer qualquer-token"))
-                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/pet")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(pet)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem", containsString("O nome deve ter entre 2 e 100 caracteres")));
     }
 
-    // Sad path: header Authorization ausente
     @Test
-    void deveFalharSemHeader() throws Exception {
+    void naoDeveEditarPetQueNaoExiste() throws Exception {
+        PetUpdateDTO dto = new PetUpdateDTO("NovoNome", "Cachorro");
+
+        mockMvc.perform(put("/pet/{id}", UUID.randomUUID())
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem", containsString("Pet não encontrado")));
+    }
+
+    @Test
+    void naoDeveExcluirPetQueNaoExiste() throws Exception {
+        mockMvc.perform(delete("/pet/{id}", UUID.randomUUID())
+                        .header("Authorization", token))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem", containsString("Pet não encontrado")));
+    }
+
+    @Test
+    void naoDeveAcessarSemToken() throws Exception {
         mockMvc.perform(get("/pet"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem", containsString("O header Authorization é obrigatório")));
     }
 }

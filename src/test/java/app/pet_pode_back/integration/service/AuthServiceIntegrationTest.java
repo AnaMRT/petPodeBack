@@ -8,16 +8,22 @@ import app.pet_pode_back.repository.PasswordResetTokenRepository;
 import app.pet_pode_back.repository.UsuarioRepository;
 import app.pet_pode_back.model.PasswordResetToken;
 import app.pet_pode_back.service.AuthService;
+import app.pet_pode_back.service.EmailService;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -37,6 +43,9 @@ class AuthServiceIntegrationTest {
     @Autowired
     private PasswordEncoder encoder;
 
+    @MockBean
+    private EmailService emailService;
+
     private Usuario usuarioPadrao;
 
     @BeforeEach
@@ -50,6 +59,8 @@ class AuthServiceIntegrationTest {
         usuarioPadrao.setSenha(encoder.encode("123456"));
 
         usuarioPadrao = usuarioRepository.save(usuarioPadrao);
+        doNothing().when(emailService).enviarEmail(anyString(), anyString(), anyString());
+
     }
 
 
@@ -115,10 +126,19 @@ class AuthServiceIntegrationTest {
                 .hasMessage("Email já cadastrado");
     }
 
+
+
+
+    @Test
+    void deveFalharRedefinirSenhaSemCodigoOuSenha() {
+        assertThatThrownBy(() -> authService.redefinirSenha("", ""))
+                .isInstanceOf(ParametroInvalidoException.class)
+                .hasMessage("Código inválido.");
+    }
+
     @Test
     void deveGerarTokenDeRedefinicao() {
         authService.solicitarRedefinicaoSenha(usuarioPadrao.getEmail());
-
         assertThat(tokenRepository.count()).isEqualTo(1);
     }
 
@@ -129,10 +149,8 @@ class AuthServiceIntegrationTest {
                 .hasMessage("Usuário não encontrado");
     }
 
-
     @Test
     void deveRedefinirSenhaComSucesso() {
-        // criar manualmente token
         PasswordResetToken token = new PasswordResetToken();
         token.setCodigo("123456");
         token.setUsuario(usuarioPadrao);
@@ -143,7 +161,6 @@ class AuthServiceIntegrationTest {
         authService.redefinirSenha("123456", "novaSenha");
 
         Usuario atualizado = usuarioRepository.findByEmail(usuarioPadrao.getEmail()).get();
-
         assertThat(encoder.matches("novaSenha", atualizado.getSenha())).isTrue();
     }
 
@@ -182,9 +199,6 @@ class AuthServiceIntegrationTest {
                 .hasMessage("Código já foi utilizado.");
     }
 
-    // -------------------------------
-// REDEFINIÇÃO DE SENHA – TOKEN JÁ USADO
-// -------------------------------
     @Test
     void deveMarcarTokenComoUsadoAposRedefinirSenha() {
         PasswordResetToken token = new PasswordResetToken();
@@ -197,17 +211,7 @@ class AuthServiceIntegrationTest {
         authService.redefinirSenha("333444", "novaSenha123");
 
         PasswordResetToken atualizado = tokenRepository.findByCodigo("333444").get();
-        assertThat(atualizado.isUsed()).isTrue(); // verifica se o token foi marcado como usado
-    }
-
-    // -------------------------------
-// REDIFINICAÇÃO – CAMPOS OBRIGATÓRIOS FALTANDO
-// -------------------------------
-    @Test
-    void deveFalharRedefinirSenhaSemCodigoOuSenha() {
-        assertThatThrownBy(() -> authService.redefinirSenha("", ""))
-                .isInstanceOf(ParametroInvalidoException.class)
-                .hasMessage("Código inválido.");
+        assertThat(atualizado.isUsed()).isTrue();
     }
 
 }

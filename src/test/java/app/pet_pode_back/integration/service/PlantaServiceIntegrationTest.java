@@ -29,16 +29,6 @@ class PlantaServiceIntegrationTest {
     @Autowired
     private PlantaRepository plantaRepository;
 
-    @MockBean
-    private Cloudinary cloudinary; // mock do Cloudinary
-
-    @MockBean
-    private JwtUtil jwtUtil;
-
-
-    @MockBean
-    private EmailService sendGrid; // mock do SendGrid
-
     private Plantas planta1;
     private Plantas planta2;
 
@@ -148,5 +138,44 @@ class PlantaServiceIntegrationTest {
         assertThat(resultado).contains(planta2); // toxica para caninos
     }
 
+    @Test
+    void listarTodosRetornaVazioQuandoNaoHaPlantas() {
+        plantaRepository.deleteAll();
+        List<Plantas> resultado = plantaService.listarTodos();
+        assertThat(resultado).isEmpty();
+    }
+
+    @Test
+    void deveBuscarPlantasRelacionadasAoNomeDoPetIntegracao() {
+        Pet pet = new Pet();
+        pet.setNome("Thor");
+        pet.setEspecie("CANINO");
+        plantaRepository.deleteAll();
+
+        Plantas toxicaCanino = new Plantas();
+        toxicaCanino.setNomePopular("ThorPlant");
+        toxicaCanino.setNomeCientifico("ThorPlant");
+        toxicaCanino.setToxicaParaCaninos(true);
+        toxicaCanino.setToxicaParaFelinos(false);
+        plantaRepository.save(toxicaCanino);
+
+        List<Plantas> resultado = plantaService.buscarPlantas("thor", pet);
+        assertThat(resultado).contains(toxicaCanino);
+    }
+
+    @Test
+    void deveEncontrarPlantaIgnorandoAcentos() {
+        Plantas acentuada = new Plantas();
+        acentuada.setNomePopular("Costela-de-Adão");
+        acentuada.setNomeCientifico("Monstera deliciosa");
+        acentuada.setToxicaParaFelinos(true);
+        acentuada.setToxicaParaCaninos(true);
+
+
+        plantaRepository.save(acentuada);
+
+        List<Plantas> resultado = plantaService.buscarPlantas("adao", null);
+        assertThat(resultado).contains(acentuada);
+    }
 
 }

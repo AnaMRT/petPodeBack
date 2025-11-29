@@ -17,13 +17,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.util.*;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
@@ -35,7 +32,6 @@ class UsuarioServiceTest {
     @Mock private Cloudinary cloudinary;
     @Mock private Uploader uploader;
     @Mock private Api api;
-
     @Mock
     private JwtUtil jwtUtil;
 
@@ -354,6 +350,7 @@ class UsuarioServiceTest {
 
         assertThrows(RegistroNaoEncontradoException.class, () -> usuarioService.getUsuarioLogado("token"));
     }
+
 
 
 }

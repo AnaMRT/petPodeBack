@@ -83,8 +83,13 @@ class UsuarioControllerTest {
     @Test
     void deveRetornar404QuandoEditarUsuarioInexistente() throws Exception {
         UUID usuarioId = UUID.randomUUID();
+
         UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
         dto.setNome("Nome");
+        dto.setEmail("email@email.com");
+        dto.setSenha("123456");
+        dto.setSenhaAtual("123456");
+        dto.setConfirmarSenha("123456");
 
         when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuarioId);
 
@@ -95,7 +100,6 @@ class UsuarioControllerTest {
                         .header("Authorization", "Bearer tokenQualquer")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andDo(print()) // veja o JSON real
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.codigo").value(404))
                 .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
@@ -130,10 +134,16 @@ class UsuarioControllerTest {
     @Test
     void deveRetornar500QuandoErroInesperadoAoEditar() throws Exception {
         UUID usuarioId = UUID.randomUUID();
+
         UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
         dto.setNome("Teste");
+        dto.setEmail("email@test.com");
+        dto.setSenhaAtual("123456");
+        dto.setSenha("1234566");
+        dto.setConfirmarSenha("1234566");
 
         when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuarioId);
+
         when(usuarioService.editarUsuario(eq(usuarioId), any()))
                 .thenThrow(new RuntimeException("Erro inesperado"));
 
@@ -268,6 +278,7 @@ class UsuarioControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.imagemUrl").value("http://foto.com/img.jpg"));
     }
+
 
 }
 

@@ -1,25 +1,22 @@
 package app.pet_pode_back.integration.controller;
 
-import app.pet_pode_back.exception.RegistroNaoEncontradoException;
 import app.pet_pode_back.model.Plantas;
-import app.pet_pode_back.service.FavoritosService;
+import app.pet_pode_back.model.Usuario;
+import app.pet_pode_back.repository.PlantaRepository;
+import app.pet_pode_back.repository.UsuarioRepository;
 import app.pet_pode_back.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Set;
 import java.util.UUID;
 
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -32,82 +29,163 @@ public class FavoritosControllerIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private PlantaRepository plantasRepository;
+
+    @Autowired
     private JwtUtil jwtUtil;
 
-    @MockBean
-    private FavoritosService favoritosService;
-
-    private UUID usuarioId;
-    private UUID plantaId;
+    private Usuario usuario;
+    private Plantas planta;
+    private String tokenValido;
 
     @BeforeEach
     void setUp() {
-        usuarioId = UUID.randomUUID();
-        plantaId = UUID.randomUUID();
-        // Mock para retornar o usuárioId quando o JWT for chamado
-        when(jwtUtil.extrairUsuarioId("tokenValido")).thenReturn(usuarioId);
+        // limpa banco antes de cada teste
+        usuarioRepository.deleteAll();
+
+        usuario = new Usuario();
+        usuario.setNome("Teste");
+        usuario.setEmail("teste@email.com");
+        usuario.setSenha("123456");
+        usuario = usuarioRepository.save(usuario);
+
+        planta = new Plantas();
+        planta.setNomePopular("Planta Teste");
+        planta.setNomeCientifico("Planta Teste");
+        planta.setToxicaParaCaninos(true);
+        planta.setToxicaParaFelinos(true);
+        planta = plantasRepository.save(planta);
+
+        // token JWT real gerado com ID do usuário salvo no banco
+        tokenValido = "Bearer " + jwtUtil.gerarToken(usuario.getId());
     }
 
     @Test
     void deveAdicionarFavorito() throws Exception {
-        mockMvc.perform(put("/favoritos/" + plantaId)
-                        .header("Authorization", "Bearer tokenValido"))
+        mockMvc.perform(put("/favoritos/" + planta.getId())
+                        .header("Authorization", tokenValido))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void deveRetornarErro400QuandoTokenNaoEnviadoNoAdicionar() throws Exception {
+        mockMvc.perform(put("/favoritos/" + planta.getId()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value("O header Authorization é obrigatório."));
+    }
+
+    @Test
+    void deveRetornarErro400QuandoTokenForInvalidoNoAdicionar() throws Exception {
+        mockMvc.perform(put("/favoritos/" + planta.getId())
+                        .header("Authorization", "Bearer token-invalido"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value("Token inválido."));
+    }
+
+    @Test
+    void deveRetornar404QuandoUsuarioNaoExistirNoAdicionar() throws Exception {
+        UUID idInexistente = UUID.randomUUID();
+        String token = "Bearer " + jwtUtil.gerarToken(idInexistente);
+
+        mockMvc.perform(put("/favoritos/" + planta.getId())
+                        .header("Authorization", token))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
+    }
+
+    // ------------------------------------------------------------------
+    // REMOVER FAVORITO
+    // ------------------------------------------------------------------
 
     @Test
     void deveRemoverFavorito() throws Exception {
-        mockMvc.perform(delete("/favoritos/" + plantaId)
-                        .header("Authorization", "Bearer tokenValido"))
+        mockMvc.perform(put("/favoritos/" + planta.getId())
+                .header("Authorization", tokenValido));
+
+        mockMvc.perform(delete("/favoritos/" + planta.getId())
+                        .header("Authorization", tokenValido))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void deveListarFavoritos() throws Exception {
-        Plantas planta = new Plantas();
-        planta.setId(plantaId);
-        planta.setNomePopular("Planta Teste");
+    void deveRetornarErro400QuandoTokenNaoEnviadoNoRemover() throws Exception {
+        mockMvc.perform(delete("/favoritos/" + planta.getId()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value("O header Authorization é obrigatório."));
+    }
 
-        when(favoritosService.listarFavoritos(usuarioId)).thenReturn(Set.of(planta));
+    @Test
+    void deveRetornarErro400QuandoTokenForInvalidoNoRemover() throws Exception {
+        mockMvc.perform(delete("/favoritos/" + planta.getId())
+                        .header("Authorization", "Bearer 123"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value("Token inválido."));
+    }
+
+    @Test
+    void deveRetornar404QuandoUsuarioNaoExistirNoRemover() throws Exception {
+        UUID idInexistente = UUID.randomUUID();
+        String token = "Bearer " + jwtUtil.gerarToken(idInexistente);
+
+        mockMvc.perform(delete("/favoritos/" + planta.getId())
+                        .header("Authorization", token))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
+    }
+
+    // ------------------------------------------------------------------
+    // LISTAR FAVORITOS
+    // ------------------------------------------------------------------
+
+    @Test
+    void deveListarFavoritos() throws Exception {
+
+        mockMvc.perform(put("/favoritos/" + planta.getId())
+                .header("Authorization", tokenValido));
 
         mockMvc.perform(get("/favoritos")
-                        .header("Authorization", "Bearer tokenValido")
+                        .header("Authorization", tokenValido)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(plantaId.toString()))
+                .andExpect(jsonPath("$[0].id").value(planta.getId().toString()))
                 .andExpect(jsonPath("$[0].nomePopular").value("Planta Teste"));
     }
 
     @Test
-    void deveRetornar401QuandoTokenForInvalido() throws Exception {
-        mockMvc.perform(put("/favoritos/" + plantaId)
-                        .header("Authorization", "Bearer token_invalido"))
-                .andExpect(status().isUnauthorized());
-    }
-    @Test
     void deveRetornarListaVaziaQuandoNaoExistiremFavoritos() throws Exception {
-        when(favoritosService.listarFavoritos(usuarioId)).thenReturn(Set.of());
-
         mockMvc.perform(get("/favoritos")
-                        .header("Authorization", "Bearer tokenValido")
-                        .accept(MediaType.APPLICATION_JSON))
+                        .header("Authorization", tokenValido))
                 .andExpect(status().isOk())
                 .andExpect(content().json("[]"));
     }
 
     @Test
-    void deveRetornar404QuandoUsuarioDoTokenNaoExistir() throws Exception {
-        when(jwtUtil.extrairUsuarioId("tokenValido")).thenReturn(usuarioId);
-
-        doThrow(new RegistroNaoEncontradoException("Usuário não encontrado"))
-                .when(favoritosService)
-                .adicionarFavorito(usuarioId, plantaId);
-
-        mockMvc.perform(put("/favoritos/" + plantaId)
-                        .header("Authorization", "Bearer tokenValido"))
-                .andExpect(status().isNotFound());
+    void deveRetornarErro400QuandoTokenNaoEnviadoNoListar() throws Exception {
+        mockMvc.perform(get("/favoritos"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value("O header Authorization é obrigatório."));
     }
 
+    @Test
+    void deveRetornarErro400QuandoTokenForInvalidoNoListar() throws Exception {
+        mockMvc.perform(get("/favoritos")
+                        .header("Authorization", "Bearer abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value("Token inválido."));
+    }
 
+    @Test
+    void deveRetornar404QuandoUsuarioNaoExistirNoListar() throws Exception {
+        UUID idQueNaoExiste = UUID.randomUUID();
+        String token = "Bearer " + jwtUtil.gerarToken(idQueNaoExiste);
+
+        mockMvc.perform(get("/favoritos")
+                        .header("Authorization", token))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
+    }
 }

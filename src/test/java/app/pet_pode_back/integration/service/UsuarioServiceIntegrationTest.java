@@ -6,23 +6,44 @@ import app.pet_pode_back.exception.RegistroNaoEncontradoException;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.UsuarioRepository;
 import app.pet_pode_back.service.UsuarioService;
-import jakarta.transaction.Transactional;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.Uploader;
+import com.cloudinary.utils.ObjectUtils;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.annotation.Transactional;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @TestPropertySource(locations = "classpath:.env.test")
 class UsuarioServiceIntegrationTest {
 
@@ -36,7 +57,16 @@ class UsuarioServiceIntegrationTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+
     private Usuario usuarioPadrao;
+
+
+    @MockBean
+    private Cloudinary cloudinary; // mock central
+
+    private Uploader uploaderMock;
+    private com.cloudinary.Api apiMock;
+
 
     @BeforeEach
     void setup() {
@@ -48,7 +78,59 @@ class UsuarioServiceIntegrationTest {
         usuarioPadrao.setSenha(passwordEncoder.encode("123456"));
 
         usuarioPadrao = usuarioRepository.save(usuarioPadrao);
+
+        uploaderMock = mock(Uploader.class);
+        apiMock = mock(com.cloudinary.Api.class);
+
+        // conectamos ao bean mockado do Spring
+        when(cloudinary.uploader()).thenReturn(uploaderMock);
+        when(cloudinary.api()).thenReturn(apiMock);
     }
+
+    @Test
+    void deveAtualizarImagemDoUsuarioComMockCloudinary() throws Exception {
+
+        Map<String, Object> resultadoUpload = Map.of(
+                "secure_url", "http://foto.com/img.jpg",
+                "public_id", "usuarios/" + usuarioPadrao.getId() + "/img"
+        );
+
+        when(uploaderMock.upload(any(byte[].class), anyMap()))
+                .thenReturn(resultadoUpload);
+
+        MockMultipartFile arquivo = new MockMultipartFile(
+                "file", "foto.jpg", "image/jpeg", "conteudo".getBytes()
+        );
+
+        String url = usuarioService.atualizarImagemUsuario(usuarioPadrao.getId(), arquivo);
+
+        assertThat(url).isEqualTo("http://foto.com/img.jpg");
+
+        Usuario atualizado = usuarioRepository.findById(usuarioPadrao.getId()).orElseThrow();
+        assertThat(atualizado.getImagemUrl()).isEqualTo("http://foto.com/img.jpg");
+        assertThat(atualizado.getImagemPublicId())
+                .isEqualTo("usuarios/" + usuarioPadrao.getId() + "/img");
+
+        verify(uploaderMock, times(1)).upload(any(byte[].class), anyMap());
+    }
+
+    @Test
+    void deveFalharAtualizarImagemSeIOException() throws Exception {
+
+        MockMultipartFile arquivo = new MockMultipartFile(
+                "file", "foto.jpg", "image/jpeg", "conteudo".getBytes()
+        );
+
+        when(uploaderMock.upload(any(byte[].class), anyMap()))
+                .thenThrow(new IOException("Falha simulada"));
+
+        assertThatThrownBy(() ->
+                usuarioService.atualizarImagemUsuario(usuarioPadrao.getId(), arquivo)
+        )
+                .isInstanceOf(IOException.class)
+                .hasMessage("Falha simulada");
+    }
+
 
     @Test
     void deveListarUsuarios() {
@@ -138,4 +220,6 @@ class UsuarioServiceIntegrationTest {
                 .isInstanceOf(RegistroNaoEncontradoException.class)
                 .hasMessage("Usuário não encontrado");
     }
+
+
 }
