@@ -42,6 +42,10 @@ class UsuarioControllerIntegrationTest {
     private JwtUtil jwtUtil;
 
 
+    @MockBean
+    private JwtUtil jwtUtilMock;
+
+
     private Usuario usuario;
     private String token;
 
@@ -169,6 +173,28 @@ class UsuarioControllerIntegrationTest {
     }
 
 
+    @Test
+    void deveRetornar403QuandoTokenInvalido() throws Exception {
+        // simula token inválido lançando IllegalArgumentException
+        when(jwtUtilMock.extrairUsuarioId(anyString()))
+                .thenThrow(new IllegalArgumentException("Token inválido"));
+
+        mockMvc.perform(delete("/usuario")
+                        .header("Authorization", "Bearer tokenInvalido"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.mensagem").value("Token inválido ou expirado"));
+    }
+
+    @Test
+    void deveRetornar403QuandoTokenExpirado() throws Exception {
+        when(jwtUtilMock.extrairUsuarioId(anyString()))
+                .thenThrow(new IllegalArgumentException("Token expirado"));
+
+        mockMvc.perform(get("/usuario/logado")
+                        .header("Authorization", "Bearer tokenExpirado"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.mensagem").value("Token inválido ou expirado"));
+    }
 
 
 }

@@ -42,7 +42,7 @@ class PlantaServiceTest {
 
     @Test
     void deveEncontrarMesmoQuandoTermoTEMsemAcentoENomeTEMacento() {
-        when(plantaRepository.findAll()).thenReturn(List.of(planta1)); // Costela-de-Adão
+        when(plantaRepository.findAll()).thenReturn(List.of(planta1));
 
         List<Plantas> resultado = plantaService.buscarPlantas("adao", null);
 

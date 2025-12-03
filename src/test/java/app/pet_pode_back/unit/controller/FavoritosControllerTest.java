@@ -42,7 +42,7 @@ class FavoritosControllerTest {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders
                 .standaloneSetup(favoritosController)
-                .setControllerAdvice(new RestExceptionHandler()) // ← ESSENCIAL
+                .setControllerAdvice(new RestExceptionHandler())
                 .build();
 
         usuarioId = UUID.randomUUID();

@@ -97,9 +97,7 @@ class AuthServiceIntegrationTest {
                 .hasMessage("Credenciais inválidas");
     }
 
-    // ----------------------------------------------------------
-    // REGISTRO
-    // ----------------------------------------------------------
+
 
     @Test
     void deveRegistrarComSucesso() {

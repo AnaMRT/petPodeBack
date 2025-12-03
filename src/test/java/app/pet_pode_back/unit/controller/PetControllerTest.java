@@ -60,7 +60,7 @@ class PetControllerTest {
 
         mockMvc = MockMvcBuilders
                 .standaloneSetup(petController)
-                .setControllerAdvice(new RestExceptionHandler()) // IMPORTANTE PARA UNITS!
+                .setControllerAdvice(new RestExceptionHandler())
                 .build();
 
 
@@ -135,7 +135,7 @@ class PetControllerTest {
         mockMvc.perform(multipart("/pet/" + petId + "/imagem")
                         .file(file)
                         .with(request -> {
-                            request.setMethod("PUT"); // 🔥 ESSENCIAL
+                            request.setMethod("PUT");
                             return request;
                         })
                         .header("Authorization", "Bearer token"))

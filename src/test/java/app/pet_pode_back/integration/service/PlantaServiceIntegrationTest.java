@@ -169,8 +169,6 @@ class PlantaServiceIntegrationTest {
 
     @Test
     void naoDeveGerarDuplicacaoComPetERegrasDeToxicidade() {
-        // planta2 já é toxica para ambos
-        // vamos torná-la também correspondente ao termo
         planta2.setNomePopular("rex");
         plantaRepository.save(planta2);
 

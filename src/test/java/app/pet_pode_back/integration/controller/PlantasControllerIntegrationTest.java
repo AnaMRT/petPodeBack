@@ -50,11 +50,9 @@ class PlantasControllerIntegrationTest {
 
     @BeforeEach
     void setup() {
-        // limpa tabelas relevantes antes de cada teste
         plantaRepository.deleteAll();
         usuarioRepository.deleteAll();
 
-        // cria usuário e pet (assumindo cascade de persistência em Usuario -> Pet)
         usuario = new Usuario();
         usuario.setNome("Rafa");
         usuario.setEmail("rafa@test.com");
@@ -66,19 +64,14 @@ class PlantasControllerIntegrationTest {
         pet.setUsuario(usuario);
         usuario.setPets(List.of(pet));
 
-        // salva usuário (e pet se houver cascade)
         usuario = usuarioRepository.save(usuario);
 
-        // token JWT real (JwtUtil.gerarToken deve existir)
         token = "Bearer " + jwtUtil.gerarToken(usuario.getId());
     }
 
-    // ----------------------------
-    // GET /plantas (listar)
-    // ----------------------------
+
     @Test
     void deveListarPlantas() throws Exception {
-        // usa construtor completo (7 args) da sua entidade Plantas
         Plantas p = new Plantas(
                 null,
                 "Costela de Adão",
@@ -96,9 +89,7 @@ class PlantasControllerIntegrationTest {
                 .andExpect(jsonPath("$[0].nomePopular").value("Costela de Adão"));
     }
 
-    // ----------------------------
-    // POST /plantas (cadastrar)
-    // ----------------------------
+
 
     @Test
     void deveBuscarPlantasComTokenValido() throws Exception {
@@ -121,9 +112,7 @@ class PlantasControllerIntegrationTest {
                 .andExpect(jsonPath("$[0].nomePopular").value("Azaleia"));
     }
 
-    // ----------------------------
-    // GET /plantas/search - se header Authorization ausente -> MissingRequestHeaderException tratada no RestExceptionHandler
-    // ----------------------------
+
     @Test
     void deveRetornarBadRequestQuandoHeaderAuthorizationAusente() throws Exception {
         mockMvc.perform(get("/plantas/search")
@@ -132,9 +121,6 @@ class PlantasControllerIntegrationTest {
                 .andExpect(jsonPath("$.mensagem").value("O header Authorization é obrigatório."));
     }
 
-    // ----------------------------
-    // DELETE /plantas/{id} (remover existente)
-    // ----------------------------
 
     @Test
     void deveRetornar404AoRemoverPlantaInexistente() throws Exception {
@@ -146,9 +132,7 @@ class PlantasControllerIntegrationTest {
                 .andExpect(jsonPath("$.mensagem").value("Planta não encontrada"));
     }
 
-    // ----------------------------
-    // Buscar quando usuário não possui pets -> deve retornar lista vazia (ou conforme sua lógica)
-    // ----------------------------
+
     @Test
     void deveBuscarMesmoSeUsuarioNaoTemPet() throws Exception {
         // salva uma planta que não bate com nada
@@ -162,7 +146,6 @@ class PlantasControllerIntegrationTest {
                 null
         ));
 
-        // atualiza usuário para não ter pets
         usuario.setPets(List.of());
         usuarioRepository.save(usuario);
 
@@ -171,13 +154,12 @@ class PlantasControllerIntegrationTest {
                         .header("Authorization", token)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                // se sua lógica retornar lista vazia nesse caso, espera vazio; caso contrário, ajuste
                 .andExpect(jsonPath("$").isArray());
     }
 
     @Test
     void deveRetornarListaVaziaQuandoNaoHaPlantas() throws Exception {
-        plantaRepository.deleteAll(); // garante que banco está vazio
+        plantaRepository.deleteAll();
 
         mockMvc.perform(get("/plantas")
                         .accept(MediaType.APPLICATION_JSON))
@@ -188,7 +170,6 @@ class PlantasControllerIntegrationTest {
 
     @Test
     void deveRetornar404QuandoUsuarioNaoExistirAoBuscarPlantas() throws Exception {
-        // token para um ID que não existe no banco
         UUID idInexistente = UUID.randomUUID();
         String tokenFake = "Bearer " + jwtUtil.gerarToken(idInexistente);
 

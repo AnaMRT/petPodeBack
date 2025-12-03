@@ -110,7 +110,6 @@ class UsuarioControllerTest {
         UUID usuarioId = UUID.randomUUID();
         when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuarioId);
 
-        // não precisa stub do usuarioService.remover se for caminho feliz (não lança)
         mockMvc.perform(delete("/usuario")
                         .header("Authorization", "Bearer tokenQualquer"))
                 .andDo(print())

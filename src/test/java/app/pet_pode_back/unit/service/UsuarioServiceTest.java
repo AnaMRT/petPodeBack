@@ -224,7 +224,7 @@ class UsuarioServiceTest {
 
         UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
         dto.setSenhaAtual("senhaAtual");
-        dto.setSenha(null); // nova senha não informada
+        dto.setSenha(null);
         dto.setConfirmarSenha("novaSenha");
 
         when(usuarioRepository.findById(id)).thenReturn(Optional.of(usuario));

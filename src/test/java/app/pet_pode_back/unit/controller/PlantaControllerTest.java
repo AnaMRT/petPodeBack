@@ -89,7 +89,7 @@ class PlantaControllerTest {
     void deveBuscarMesmoSeUsuarioNaoTemPet() {
         UUID id = UUID.randomUUID();
         Usuario usuario = new Usuario();
-        usuario.setPets(Collections.emptyList()); // Sem pet
+        usuario.setPets(Collections.emptyList());
 
         when(jwtUtil.extrairUsuarioId("token123")).thenReturn(id);
         when(usuarioService.buscarUsuarioPorId(id)).thenReturn(usuario);

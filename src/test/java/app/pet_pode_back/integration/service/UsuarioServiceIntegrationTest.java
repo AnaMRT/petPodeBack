@@ -63,7 +63,7 @@ class UsuarioServiceIntegrationTest {
 
 
     @MockBean
-    private Cloudinary cloudinary; // mock central
+    private Cloudinary cloudinary;
 
     private Uploader uploaderMock;
     private com.cloudinary.Api apiMock;
@@ -71,7 +71,7 @@ class UsuarioServiceIntegrationTest {
 
     @BeforeEach
     void setup() {
-        usuarioRepository.deleteAll(); // limpa usuários antes
+        usuarioRepository.deleteAll();
 
         usuarioPadrao = new Usuario();
         usuarioPadrao.setNome("Rafa");
