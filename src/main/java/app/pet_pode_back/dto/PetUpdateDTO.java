@@ -1,12 +1,15 @@
 package app.pet_pode_back.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import java.util.Objects;
 
 public class PetUpdateDTO {
+    @NotBlank(message = "Nome nao pode ser nulo")
     @Size(min = 2, max = 100, message = "O nome deve ter entre 2 e 100 caracteres.")
     private String nome;
+    @NotBlank(message = "Especie nao pode ser nula")
     private String especie;
 
     public PetUpdateDTO() {
