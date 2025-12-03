@@ -14,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MissingRequestHeaderException;
 
 import java.util.*;
 
@@ -155,5 +156,62 @@ class PlantaControllerTest {
 
         assertEquals("Erro no service", ex.getMessage());
     }
+
+    @Test
+    void deveListarPlantasVazia() {
+        when(plantaService.listarTodos()).thenReturn(Collections.emptyList());
+
+        ResponseEntity<List<Plantas>> resposta = plantasController.listar();
+
+        assertEquals(200, resposta.getStatusCodeValue());
+        assertTrue(resposta.getBody().isEmpty());
+        verify(plantaService, times(1)).listarTodos();
+    }
+    @Test
+    void deveBuscarPlantasComTermoParcial() {
+        UUID id = UUID.randomUUID();
+
+        Usuario usuario = new Usuario();
+        Pet pet = new Pet();
+        pet.setEspecie("Canino");
+        usuario.setPets(List.of(pet));
+
+        List<Plantas> resultado = List.of(new Plantas());
+
+        when(jwtUtil.extrairUsuarioId("token")).thenReturn(id);
+        when(usuarioService.buscarUsuarioPorId(id)).thenReturn(usuario);
+        when(plantaService.buscarPlantas("azal", pet)).thenReturn(resultado);
+
+        ResponseEntity<List<Plantas>> resposta =
+                plantasController.buscar("azal", "Bearer token");
+
+        assertEquals(200, resposta.getStatusCodeValue());
+        assertEquals(resultado, resposta.getBody());
+    }
+    @Test
+    void deveBuscarIgnorandoAcentuacao() {
+        UUID id = UUID.randomUUID();
+
+        Usuario usuario = new Usuario();
+        Pet pet = new Pet();
+        pet.setEspecie("Canino");
+        usuario.setPets(List.of(pet));
+
+        Plantas planta = new Plantas();
+        planta.setNomePopular("Costela-de-Adão");
+
+        when(jwtUtil.extrairUsuarioId("token")).thenReturn(id);
+        when(usuarioService.buscarUsuarioPorId(id)).thenReturn(usuario);
+        when(plantaService.buscarPlantas("adao", pet)).thenReturn(List.of(planta));
+
+        ResponseEntity<List<Plantas>> resposta =
+                plantasController.buscar("adao", "Bearer token");
+
+        assertEquals(200, resposta.getStatusCodeValue());
+        assertEquals("Costela-de-Adão", resposta.getBody().get(0).getNomePopular());
+    }
+
+
+
 
 }

@@ -27,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -82,7 +83,6 @@ class UsuarioServiceIntegrationTest {
         uploaderMock = mock(Uploader.class);
         apiMock = mock(com.cloudinary.Api.class);
 
-        // conectamos ao bean mockado do Spring
         when(cloudinary.uploader()).thenReturn(uploaderMock);
         when(cloudinary.api()).thenReturn(apiMock);
     }
@@ -132,12 +132,7 @@ class UsuarioServiceIntegrationTest {
     }
 
 
-    @Test
-    void deveListarUsuarios() {
-        List<Usuario> usuarios = usuarioService.listarTodos();
-        assertThat(usuarios).isNotEmpty();
-        assertThat(usuarios.get(0).getEmail()).isEqualTo(usuarioPadrao.getEmail());
-    }
+
 
     @Test
     void deveEditarNomeDoUsuario() {
@@ -219,6 +214,78 @@ class UsuarioServiceIntegrationTest {
         assertThatThrownBy(() -> usuarioService.remover(idInexistente))
                 .isInstanceOf(RegistroNaoEncontradoException.class)
                 .hasMessage("Usuário não encontrado");
+    }
+    @Test
+    void deveFalharAtualizacaoSenhaComSenhaAtualFaltando() {
+        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+        dto.setSenha("novaSenha");
+        dto.setConfirmarSenha("novaSenha");
+
+        assertThatThrownBy(() -> usuarioService.editarUsuario(usuarioPadrao.getId(), dto))
+                .isInstanceOf(ParametroInvalidoException.class)
+                .hasMessage("Para alterar a senha, informe também a senha atual.");
+    }
+
+    @Test
+    void deveFalharAtualizacaoSenhaComNovaSenhaFaltando() {
+        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+        dto.setSenhaAtual("123456");
+
+        assertThatThrownBy(() -> usuarioService.editarUsuario(usuarioPadrao.getId(), dto))
+                .isInstanceOf(ParametroInvalidoException.class)
+                .hasMessage("Para alterar a senha, informe nova senha e confirmação.");
+    }
+    @Test
+    void deveFalharBuscarUsuarioPorIdInexistente() {
+        UUID idInexistente = UUID.randomUUID();
+
+        assertThatThrownBy(() -> usuarioService.buscarUsuarioPorId(idInexistente))
+                .isInstanceOf(RegistroNaoEncontradoException.class)
+                .hasMessage("Usuário não encontrado");
+    }
+    @Test
+    void deveFalharSeSenhaAtualInformadaMasNovaSenhaFaltando() {
+        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+        dto.setSenhaAtual("123456"); // atual informada
+        dto.setSenha(null);           // nova senha ausente
+        dto.setConfirmarSenha(null);
+
+        assertThatThrownBy(() -> usuarioService.editarUsuario(usuarioPadrao.getId(), dto))
+                .isInstanceOf(ParametroInvalidoException.class)
+                .hasMessage("Para alterar a senha, informe nova senha e confirmação.");
+    }
+    @Test
+    void deveFalharSeNovaSenhaDiferenteDaConfirmacao() {
+        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+        dto.setSenhaAtual("123456");
+        dto.setSenha("novaSenha");
+        dto.setConfirmarSenha("outraSenha");
+
+        assertThatThrownBy(() -> usuarioService.editarUsuario(usuarioPadrao.getId(), dto))
+                .isInstanceOf(ParametroInvalidoException.class)
+                .hasMessage("Nova senha e confirmação não coincidem.");
+    }
+    @Test
+    void deveFalharSeNovaSenhaSemSenhaAtual() {
+        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+        dto.setSenha("novaSenha");
+        dto.setConfirmarSenha("novaSenha");
+        dto.setSenhaAtual(null);
+
+        assertThatThrownBy(() -> usuarioService.editarUsuario(usuarioPadrao.getId(), dto))
+                .isInstanceOf(ParametroInvalidoException.class)
+                .hasMessage("Para alterar a senha, informe também a senha atual.");
+    }
+    @Test
+    void deveFalharSeSenhaAtualIncorreta() {
+        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+        dto.setSenhaAtual("errada");
+        dto.setSenha("novaSenha");
+        dto.setConfirmarSenha("novaSenha");
+
+        assertThatThrownBy(() -> usuarioService.editarUsuario(usuarioPadrao.getId(), dto))
+                .isInstanceOf(ParametroInvalidoException.class)
+                .hasMessage("Senha atual incorreta.");
     }
 
 

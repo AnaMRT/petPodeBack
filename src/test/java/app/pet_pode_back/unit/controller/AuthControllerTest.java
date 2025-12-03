@@ -96,7 +96,7 @@ class AuthControllerTest {
 
 
     @Test
-    void deveCadastrarUsuarioComSucesso() {
+    void deveRegistrarUsuarioComSucesso() {
         Usuario novo = new Usuario();
         novo.setEmail("novo@teste.com");
         novo.setSenha("123");
@@ -114,7 +114,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void deveFalharAoCadastrarUsuarioComEmailJaExistente() {
+    void deveFalharAoRegistrarUsuarioComEmailJaExistente() {
         Usuario novo = new Usuario();
         novo.setEmail("teste@teste.com");
 

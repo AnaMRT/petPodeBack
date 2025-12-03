@@ -87,7 +87,7 @@ class AuthServiceIntegrationTest {
     }
 
     @Test
-    void deveFalharAoTentarLogarSenhaErrada() {
+    void deveFalharQuandoSenhaIncorreta() {
         LoginRequest req = new LoginRequest();
         req.setEmail(usuarioPadrao.getEmail());
         req.setSenha("senhaErrada");
@@ -115,7 +115,7 @@ class AuthServiceIntegrationTest {
     }
 
     @Test
-    void deveFalharAoRegistrarEmailDuplicado() {
+    void deveFalharQuandoEmailJaCadastrado() {
         Usuario novo = new Usuario();
         novo.setNome("X");
         novo.setEmail(usuarioPadrao.getEmail());
@@ -165,14 +165,14 @@ class AuthServiceIntegrationTest {
     }
 
     @Test
-    void deveFalharComCodigoInvalido() {
+    void deveFalharAoRedefinirSenhaComCodigoInvalido() {
         assertThatThrownBy(() -> authService.redefinirSenha("999999", "senha"))
                 .isInstanceOf(ParametroInvalidoException.class)
                 .hasMessage("Código inválido.");
     }
 
     @Test
-    void deveFalharComTokenExpirado() {
+    void deveFalharAoRedefinirSenhaComTokenExpirado() {
         PasswordResetToken token = new PasswordResetToken();
         token.setCodigo("111222");
         token.setUsuario(usuarioPadrao);
@@ -186,7 +186,7 @@ class AuthServiceIntegrationTest {
     }
 
     @Test
-    void deveFalharComTokenJaUsado() {
+    void deveFalharAoRedefinirSenhaComTokenJaUsado() {
         PasswordResetToken token = new PasswordResetToken();
         token.setCodigo("222333");
         token.setUsuario(usuarioPadrao);

@@ -272,5 +272,19 @@ class PetControllerTest {
                         org.hamcrest.Matchers.containsString("O nome deve ter entre 2 e 100 caracteres")));
     }
 
+    @Test
+    void naoDeveEditarPetDeOutroUsuario() throws Exception {
+        PetUpdateDTO dto = new PetUpdateDTO();
+        dto.setNome("NovoNome");
 
+        doThrow(new SemPermissaoException("Você não tem permissão para alterar esse pet."))
+                .when(petService).editarPet(any(), eq(usuarioId), any());
+
+        mockMvc.perform(put("/pet/" + petId)
+                        .header("Authorization", "Bearer token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(dto)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.mensagem").value("Você não tem permissão para alterar esse pet."));
+    }
 }

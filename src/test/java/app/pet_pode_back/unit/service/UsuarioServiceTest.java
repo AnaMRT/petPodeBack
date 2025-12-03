@@ -160,7 +160,6 @@ class UsuarioServiceTest {
 
         usuarioService.remover(usuarioId);
 
-        // Cloudinary (mesmos asserts do teste anterior)
         verify(uploader).destroy(eq("user-img"), any());
         verify(uploader).destroy(eq("pet-img"), any());
 
@@ -168,7 +167,6 @@ class UsuarioServiceTest {
         verify(api).deleteFolder(eq("usuarios/" + usuarioId), any());
         verify(api).deleteFolder(eq("pets/" + usuarioId), any());
 
-        // Agora o delete acontece apenas UMA VEZ aqui
         verify(usuarioRepository, times(1)).delete(usuario);
     }
 

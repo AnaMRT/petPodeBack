@@ -166,7 +166,7 @@ class PetServiceTest {
     }
 
     @Test
-    void deveLancarErroAoAtualizarImagemDeOutroUsuario() {
+    void deveLancarErroAoAtualizarImagemDePetDeOutroUsuario() {
         Usuario outro = new Usuario();
         outro.setId(UUID.randomUUID());
         pet.setUsuario(outro);
@@ -285,6 +285,15 @@ class PetServiceTest {
                         () -> petService.salvarPet(pet, UUID.randomUUID()));
 
         assertEquals("Usuário não encontrado.", ex.getMessage());
+    }
+    @Test
+    void deveLancarErroQuandoUploadFalhar() throws Exception {
+        when(petRepository.findById(pet.getId())).thenReturn(Optional.of(pet));
+        when(file.getBytes()).thenReturn("abc".getBytes());
+        when(uploader.upload(any(), any())).thenThrow(new IOException("Falha ao enviar imagem"));
+
+        assertThrows(IOException.class, () ->
+                petService.atualizarImagemPet(pet.getId(), usuario.getId(), file));
     }
 
 }

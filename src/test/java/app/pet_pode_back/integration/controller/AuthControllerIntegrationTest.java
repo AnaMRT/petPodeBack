@@ -56,9 +56,6 @@ public class AuthControllerIntegrationTest {
 
     }
 
-    // -------------------------------
-    // MÉTODO AUXILIAR PARA TESTES
-    // -------------------------------
     private PasswordResetToken criarToken(Usuario usuario, String codigo, boolean usado, LocalDateTime expira) {
         PasswordResetToken t = new PasswordResetToken();
         t.setUsuario(usuario);
@@ -68,9 +65,7 @@ public class AuthControllerIntegrationTest {
         return resetTokenRepository.save(t);
     }
 
-    // -------------------------------
-    // 1 — REGISTRAR (SUCESSO)
-    // -------------------------------
+
     @Test
     void deveRegistrarUsuarioComSucesso() throws Exception {
 
@@ -89,11 +84,9 @@ public class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.token").exists());
     }
 
-    // -------------------------------
-    // 2 — REGISTRAR (EMAIL JA EXISTE)
-    // -------------------------------
+
     @Test
-    void deveFalharAoRegistrarComEmailDuplicado() throws Exception {
+    void deveFalharAoRegistrarUsuarioComEmailJaExistente() throws Exception {
 
         Usuario u = new Usuario();
         u.setNome("Rafa");
@@ -116,9 +109,7 @@ public class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.mensagem").value("Email já cadastrado"));
     }
 
-    // -------------------------------
-    // 3 — LOGIN (SUCESSO)
-    // -------------------------------
+
     @Test
     void deveLogarComSucesso() throws Exception {
 
@@ -142,11 +133,9 @@ public class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.token").exists());
     }
 
-    // -------------------------------
-    // 4 — LOGIN (SENHA INCORRETA)
-    // -------------------------------
+
     @Test
-    void deveFalharLoginSenhaIncorreta() throws Exception {
+    void deveFalharAoLogarComCredenciaisInvalidas() throws Exception {
 
         Usuario u = new Usuario();
         u.setNome("Rafa");
@@ -168,9 +157,7 @@ public class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.mensagem").value("Credenciais inválidas"));
     }
 
-    // -------------------------------
-    // 5 — LOGIN (EMAIL INEXISTENTE)
-    // -------------------------------
+
     @Test
     void deveFalharLoginComEmailNaoEncontrado() throws Exception {
 
@@ -188,9 +175,7 @@ public class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
     }
 
-    // -------------------------------
-    // 6 — FORGOT PASSWORD (SUCESSO)
-    // -------------------------------
+
     @Test
     void deveSolicitarRedefinicaoSenhaComSucesso() throws Exception {
 
@@ -208,11 +193,8 @@ public class AuthControllerIntegrationTest {
         assertEquals(1, resetTokenRepository.count());
     }
 
-    // -------------------------------
-    // 7 — FORGOT PASSWORD (EMAIL NÃO EXISTE)
-    // -------------------------------
     @Test
-    void deveFalharAoSolicitarRedefinicaoSenhaEmailNaoExiste() throws Exception {
+    void deveFalharAoSolicitarRedefinicaoQuandoEmailNaoExiste() throws Exception {
 
         mockMvc.perform(post("/auth/forgot-password")
                         .param("email", "naoexiste@test.com"))
@@ -220,9 +202,7 @@ public class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
     }
 
-    // -------------------------------
-    // 8 — RESET PASSWORD (SUCESSO)
-    // -------------------------------
+
     @Test
     void deveRedefinirSenhaComSucesso() throws Exception {
 
@@ -251,11 +231,9 @@ public class AuthControllerIntegrationTest {
         assertTrue(passwordEncoder.matches("nova123", atualizado.getSenha()));
     }
 
-    // -------------------------------
-    // 9 — RESET PASSWORD (TOKEN INVÁLIDO)
-    // -------------------------------
+
     @Test
-    void deveFalharAoRedefinirSenhaTokenInvalido() throws Exception {
+    void deveFalharAoRedefinirSenhaComCodigoInvalido() throws Exception {
 
         String json = """
                 {
@@ -271,9 +249,7 @@ public class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.mensagem").value("Código inválido."));
     }
 
-    // -------------------------------
-    // 10 — RESET PASSWORD (TOKEN JÁ USADO)
-    // -------------------------------
+
     @Test
     void deveFalharAoRedefinirSenhaTokenUsado() throws Exception {
 
@@ -299,9 +275,7 @@ public class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.mensagem").value("Código já foi utilizado."));
     }
 
-    // -------------------------------
-    // 11 — RESET PASSWORD (TOKEN EXPIRADO)
-    // -------------------------------
+
     @Test
     void deveFalharAoRedefinirSenhaTokenExpirado() throws Exception {
 
@@ -327,9 +301,6 @@ public class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.mensagem").value("Código expirado."));
     }
 
-    // -------------------------------
-    // 12 — RESET PASSWORD (CAMPOS OBRIGATÓRIOS FALTANDO)
-    // -------------------------------
     @Test
     void deveFalharAoRedefinirSenhaSemCamposObrigatorios() throws Exception {
 
@@ -346,11 +317,8 @@ public class AuthControllerIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
-    // -------------------------------
-// LOGIN – CAMPOS OBRIGATÓRIOS
-// -------------------------------
     @Test
-    void deveFalharLoginSemEmailOuSenha() throws Exception {
+    void deveFalharAoLogarComCamposInvalidos() throws Exception {
         String json = """
             {
               "email": "",
@@ -364,11 +332,9 @@ public class AuthControllerIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
-    // -------------------------------
-// REGISTRO – CAMPOS OBRIGATÓRIOS
-// -------------------------------
+
     @Test
-    void deveFalharRegistroSemNomeEmailOuSenha() throws Exception {
+    void deveFalharAoRegistrarComCamposInvalidos() throws Exception {
         String json = """
             {
               "nome": "",
@@ -383,9 +349,7 @@ public class AuthControllerIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
-    // -------------------------------
-// RESET PASSWORD – CAMPOS OBRIGATÓRIOS
-// -------------------------------
+
     @Test
     void deveFalharResetSenhaSemCampos() throws Exception {
         String json = """

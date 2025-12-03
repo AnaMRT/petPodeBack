@@ -193,6 +193,69 @@ class PlantaServiceTest {
         assertThat(resultado).isEmpty();
     }
 
+    @Test
+    void deveListarTodasAsPlantasRetornandoVazioQuandoNaoHouverPlantas() {
+        when(plantaRepository.findAll()).thenReturn(List.of());
 
+        List<Plantas> resultado = plantaService.listarTodos();
+
+        assertThat(resultado).isEmpty();
+        verify(plantaRepository, times(1)).findAll();
+    }
+    @Test
+    void naoDeveGerarDuplicacaoQuandoPlantaVemDeFindAllETambemDaListaToxica() {
+        when(plantaRepository.findAll()).thenReturn(List.of(planta1));
+        when(plantaRepository.findByToxicaParaCaninosTrue()).thenReturn(List.of(planta1));
+
+        List<Plantas> resultado = plantaService.buscarPlantas("canino", null);
+
+        assertThat(resultado).hasSize(1).contains(planta1);
+    }
+
+
+
+    @Test
+    void deveEncontrarPlantaIgnorandoAcentosMesmoAposInsercaoDinamica() {
+        Plantas acentuada = new Plantas();
+        acentuada.setNomePopular("Costela-de-Adão");
+        acentuada.setNomeCientifico("Monstera deliciosa");
+
+        when(plantaRepository.findAll()).thenReturn(List.of(acentuada));
+
+        List<Plantas> resultado = plantaService.buscarPlantas("adao", null);
+
+        assertThat(resultado).contains(acentuada);
+    }
+
+    @Test
+    void deveRetornarPlantasToxicasQuandoTermoForCanino() {
+        when(plantaRepository.findAll()).thenReturn(List.of());
+        when(plantaRepository.findByToxicaParaCaninosTrue()).thenReturn(List.of(planta1));
+
+        List<Plantas> resultado = plantaService.buscarPlantas("canino", null);
+
+        assertThat(resultado).containsExactly(planta1);
+    }
+    @Test
+    void deveRetornarPlantasToxicasQuandoTermoForFelino() {
+        when(plantaRepository.findAll()).thenReturn(List.of());
+        when(plantaRepository.findByToxicaParaFelinosTrue()).thenReturn(List.of(planta2));
+
+        List<Plantas> resultado = plantaService.buscarPlantas("felino", null);
+
+        assertThat(resultado).containsExactly(planta2);
+    }
+    @Test
+    void deveEncontrarPlantaComAcentoRetornadaDoRepositorio() {
+        Plantas acentuada = new Plantas();
+        acentuada.setNomePopular("Jibóia");
+        acentuada.setNomeCientifico("Epipremnum aureum");
+
+        when(plantaRepository.findAll()).thenReturn(List.of(acentuada));
+
+        List<Plantas> resultado = plantaService.buscarPlantas("jiboia", null);
+
+        assertThat(resultado).contains(acentuada);
+    }
 
 }

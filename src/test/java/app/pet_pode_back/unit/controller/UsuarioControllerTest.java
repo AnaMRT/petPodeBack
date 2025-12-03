@@ -278,6 +278,25 @@ class UsuarioControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.imagemUrl").value("http://foto.com/img.jpg"));
     }
+    @Test
+    void deveRetornar409AoEditarUsuarioComEmailDuplicado() throws Exception {
+        UUID usuarioId = UUID.randomUUID();
+        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+        dto.setNome("Nome");
+        dto.setEmail("duplicado@email.com");
+
+        when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuarioId);
+        doThrow(new DataIntegrityViolationException("duplicado"))
+                .when(usuarioService).editarUsuario(eq(usuarioId), any());
+
+        mockMvc.perform(put("/usuario")
+                        .header("Authorization", "Bearer token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.mensagem")
+                        .value("Operação inválida: já existe um registro com esses dados."));
+    }
 
 
 }

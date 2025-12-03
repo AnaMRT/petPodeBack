@@ -73,7 +73,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void deveFalharQuandoEmailNaoExiste() {
+    void deveFalharAoTentarLogarEmailInexistente() {
         LoginRequest request = new LoginRequest();
         request.setEmail("naoexiste@x.com");
         request.setSenha("123");
@@ -220,7 +220,7 @@ class AuthServiceTest {
 
 
     @Test
-    void deveLancarExcecaoQuandoEmailNaoEncontradoSolicitarRedefinicaoSenha() {
+    void deveFalharSolicitarRedefinicaoParaEmailInexistente() {
         String email = "naoexiste@email.com";
         when(usuarioRepository.findByEmail(email)).thenReturn(Optional.empty());
 

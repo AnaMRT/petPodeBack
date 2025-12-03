@@ -51,7 +51,6 @@ class FavoritosServiceTest {
 
     @Test
     void deveAdicionarFavoritoComSucesso() {
-        // Arrange
         when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.of(usuario));
         when(plantaRepository.findById(plantaId)).thenReturn(Optional.of(planta));
 
@@ -63,7 +62,7 @@ class FavoritosServiceTest {
     }
 
     @Test
-    void deveLancarErroQuandoUsuarioNaoExisteAoAdicionarFavorito() {
+    void deveLancarExcecaoSeUsuarioNaoExistir() {
         when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.empty());
 
         assertThrows(RegistroNaoEncontradoException.class,
@@ -71,7 +70,7 @@ class FavoritosServiceTest {
     }
 
     @Test
-    void deveLancarErroQuandoPlantaNaoExisteAoAdicionarFavorito() {
+    void deveLancarExcecaoSePlantaNaoExistir() {
         when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.of(usuario));
         when(plantaRepository.findById(plantaId)).thenReturn(Optional.empty());
 
@@ -129,4 +128,37 @@ class FavoritosServiceTest {
         assertThrows(RegistroNaoEncontradoException.class,
                 () -> favoritosService.listarFavoritos(usuarioId));
     }
+
+    @Test
+    void deveAdicionarMesmaPlantaApenasUmaVez() {
+        usuario.getFavoritos().add(planta);
+        when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.of(usuario));
+        when(plantaRepository.findById(plantaId)).thenReturn(Optional.of(planta));
+
+        favoritosService.adicionarFavorito(usuarioId, plantaId);
+
+        assertEquals(1, usuario.getFavoritos().size());
+    }
+    @Test
+    void deveRemoverPlantaQueNaoEstaNosFavoritosSemErro() {
+        when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.of(usuario));
+        when(plantaRepository.findById(plantaId)).thenReturn(Optional.of(planta));
+
+        assertDoesNotThrow(() -> favoritosService.removerFavorito(usuarioId, plantaId));
+    }
+    @Test
+    void deveListarFavoritosComMaisDeUmFavorito() {
+        Plantas planta2 = new Plantas();
+        planta2.setId(UUID.randomUUID());
+
+        usuario.getFavoritos().add(planta);
+        usuario.getFavoritos().add(planta2);
+
+        when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.of(usuario));
+
+        Set<Plantas> favoritos = favoritosService.listarFavoritos(usuarioId);
+
+        assertEquals(2, favoritos.size());
+    }
+
 }

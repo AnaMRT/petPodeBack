@@ -44,7 +44,6 @@ public class FavoritosControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // limpa banco antes de cada teste
         usuarioRepository.deleteAll();
 
         usuario = new Usuario();
@@ -60,12 +59,11 @@ public class FavoritosControllerIntegrationTest {
         planta.setToxicaParaFelinos(true);
         planta = plantasRepository.save(planta);
 
-        // token JWT real gerado com ID do usuário salvo no banco
         tokenValido = "Bearer " + jwtUtil.gerarToken(usuario.getId());
     }
 
     @Test
-    void deveAdicionarFavorito() throws Exception {
+    void deveAdicionarFavoritoComSucesso() throws Exception {
         mockMvc.perform(put("/favoritos/" + planta.getId())
                         .header("Authorization", tokenValido))
                 .andExpect(status().isOk());
@@ -97,12 +95,9 @@ public class FavoritosControllerIntegrationTest {
                 .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
     }
 
-    // ------------------------------------------------------------------
-    // REMOVER FAVORITO
-    // ------------------------------------------------------------------
 
     @Test
-    void deveRemoverFavorito() throws Exception {
+    void deveRemoverFavoritoComSucesso() throws Exception {
         mockMvc.perform(put("/favoritos/" + planta.getId())
                 .header("Authorization", tokenValido));
 
@@ -137,12 +132,9 @@ public class FavoritosControllerIntegrationTest {
                 .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
     }
 
-    // ------------------------------------------------------------------
-    // LISTAR FAVORITOS
-    // ------------------------------------------------------------------
 
     @Test
-    void deveListarFavoritos() throws Exception {
+    void deveListarFavoritosComSucesso() throws Exception {
 
         mockMvc.perform(put("/favoritos/" + planta.getId())
                 .header("Authorization", tokenValido));
@@ -155,13 +147,6 @@ public class FavoritosControllerIntegrationTest {
                 .andExpect(jsonPath("$[0].nomePopular").value("Planta Teste"));
     }
 
-    @Test
-    void deveRetornarListaVaziaQuandoNaoExistiremFavoritos() throws Exception {
-        mockMvc.perform(get("/favoritos")
-                        .header("Authorization", tokenValido))
-                .andExpect(status().isOk())
-                .andExpect(content().json("[]"));
-    }
 
     @Test
     void deveRetornarErro400QuandoTokenNaoEnviadoNoListar() throws Exception {

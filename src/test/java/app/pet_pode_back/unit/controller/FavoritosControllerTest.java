@@ -49,9 +49,6 @@ class FavoritosControllerTest {
         plantaId = UUID.randomUUID();
     }
 
-    // ------------------------------------------------------------
-    // ADICIONAR FAVORITO
-    // ------------------------------------------------------------
 
     @Test
     void deveAdicionarFavoritoComSucesso() throws Exception {
@@ -81,9 +78,6 @@ class FavoritosControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    // ------------------------------------------------------------
-    // REMOVER FAVORITO
-    // ------------------------------------------------------------
 
     @Test
     void deveRemoverFavoritoComSucesso() throws Exception {
@@ -113,9 +107,6 @@ class FavoritosControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    // ------------------------------------------------------------
-    // LISTAR FAVORITOS
-    // ------------------------------------------------------------
 
     @Test
     void deveListarFavoritosComSucesso() throws Exception {

@@ -185,4 +185,19 @@ class PlantasControllerIntegrationTest {
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$").isEmpty());
     }
+
+    @Test
+    void deveRetornar404QuandoUsuarioNaoExistirAoBuscarPlantas() throws Exception {
+        // token para um ID que não existe no banco
+        UUID idInexistente = UUID.randomUUID();
+        String tokenFake = "Bearer " + jwtUtil.gerarToken(idInexistente);
+
+        mockMvc.perform(get("/plantas/search")
+                        .param("termo", "rosa")
+                        .header("Authorization", tokenFake)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
+    }
+
 }

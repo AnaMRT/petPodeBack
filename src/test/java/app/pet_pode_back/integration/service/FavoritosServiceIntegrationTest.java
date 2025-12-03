@@ -42,7 +42,6 @@ class FavoritosServiceIntegrationTest {
 
     @BeforeEach
     void setup() {
-        // criar usuário e planta no banco de teste
         usuario = new Usuario();
         usuario.setNome("Teste Usuario");
         usuario.setEmail("teste@usuario.com");
@@ -59,7 +58,7 @@ class FavoritosServiceIntegrationTest {
     }
 
     @Test
-    void deveAdicionarFavorito() {
+    void deveAdicionarFavoritoComSucesso() {
         favoritosService.adicionarFavorito(usuario.getId(), planta.getId());
 
         Set<Plantas> favoritos = favoritosService.listarFavoritos(usuario.getId());
@@ -68,7 +67,7 @@ class FavoritosServiceIntegrationTest {
     }
 
     @Test
-    void deveRemoverFavorito() {
+    void deveRemoverFavoritoComSucesso() {
         favoritosService.adicionarFavorito(usuario.getId(), planta.getId());
         favoritosService.removerFavorito(usuario.getId(), planta.getId());
 
@@ -118,7 +117,6 @@ class FavoritosServiceIntegrationTest {
 
     @Test
     void deveRemoverPlantaQueNaoEstaNosFavoritosSemErro() {
-        // planta ainda não está nos favoritos
         favoritosService.removerFavorito(usuario.getId(), planta.getId());
 
         Set<Plantas> favoritos = favoritosService.listarFavoritos(usuario.getId());
@@ -127,7 +125,6 @@ class FavoritosServiceIntegrationTest {
 
     @Test
     void deveListarFavoritosComMaisDeUmFavorito() {
-        // cria segunda planta
         Plantas planta2 = new Plantas();
         planta2.setNomeCientifico("Outra Planta Científica");
         planta2.setNomePopular("Outra Planta Popular");
@@ -144,5 +141,17 @@ class FavoritosServiceIntegrationTest {
         assertTrue(favoritos.contains(planta));
         assertTrue(favoritos.contains(planta2));
     }
+
+    @Test
+    void deveLancarErroQuandoPlantaNaoExisteAoRemoverFavorito() {
+        UUID plantaInexistente = UUID.randomUUID();
+
+        RegistroNaoEncontradoException ex =
+                assertThrows(RegistroNaoEncontradoException.class,
+                        () -> favoritosService.removerFavorito(usuario.getId(), plantaInexistente));
+
+        assertEquals("Planta não encontrada", ex.getMessage());
+    }
+
 
 }

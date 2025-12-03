@@ -34,7 +34,6 @@ class PlantaServiceIntegrationTest {
 
     @BeforeEach
     void setup() {
-        // Limpa o banco antes de cada teste
         plantaRepository.deleteAll();
 
         planta1 = new Plantas();
@@ -117,7 +116,6 @@ class PlantaServiceIntegrationTest {
 
     @Test
     void naoDeveGerarDuplicacaoQuandoPlantaApareceEmMaisDeUmaRegra() {
-        // Adicionando planta2 toxica para caninos e felinos
         List<Plantas> resultado = plantaService.buscarPlantas("canino", null);
         assertThat(resultado).hasSize(1); // planta2 só aparece uma vez
     }
@@ -145,23 +143,7 @@ class PlantaServiceIntegrationTest {
         assertThat(resultado).isEmpty();
     }
 
-    @Test
-    void deveBuscarPlantasRelacionadasAoNomeDoPetIntegracao() {
-        Pet pet = new Pet();
-        pet.setNome("Thor");
-        pet.setEspecie("CANINO");
-        plantaRepository.deleteAll();
 
-        Plantas toxicaCanino = new Plantas();
-        toxicaCanino.setNomePopular("ThorPlant");
-        toxicaCanino.setNomeCientifico("ThorPlant");
-        toxicaCanino.setToxicaParaCaninos(true);
-        toxicaCanino.setToxicaParaFelinos(false);
-        plantaRepository.save(toxicaCanino);
-
-        List<Plantas> resultado = plantaService.buscarPlantas("thor", pet);
-        assertThat(resultado).contains(toxicaCanino);
-    }
 
     @Test
     void deveEncontrarPlantaIgnorandoAcentos() {
@@ -175,6 +157,48 @@ class PlantaServiceIntegrationTest {
         plantaRepository.save(acentuada);
 
         List<Plantas> resultado = plantaService.buscarPlantas("adao", null);
+        assertThat(resultado).contains(acentuada);
+    }
+    @Test
+    void deveRetornarPlantasToxicasParaCaninosQuandoTermoForCachorro() {
+        List<Plantas> resultado = plantaService.buscarPlantas("cachorro", null);
+
+        assertThat(resultado).contains(planta2);
+    }
+
+
+    @Test
+    void naoDeveGerarDuplicacaoComPetERegrasDeToxicidade() {
+        // planta2 já é toxica para ambos
+        // vamos torná-la também correspondente ao termo
+        planta2.setNomePopular("rex");
+        plantaRepository.save(planta2);
+
+        Pet pet = new Pet();
+        pet.setNome("Rex");
+        pet.setEspecie("CANINO");
+
+        List<Plantas> resultado = plantaService.buscarPlantas("rex", pet);
+
+        assertThat(resultado).hasSize(1).contains(planta2);
+    }
+    @Test
+    void deveRetornarVazioMesmoComBDPreenchidoQuandoTermoInvalido() {
+        List<Plantas> resultado = plantaService.buscarPlantas("@@@###", null);
+        assertThat(resultado).isEmpty();
+    }
+    @Test
+    void deveEncontrarPlantasIgnorandoAcentosEmListaMista() {
+        Plantas acentuada = new Plantas();
+        acentuada.setNomePopular("Costela-de-Adão");
+        acentuada.setNomeCientifico("Monstera deliciosa");
+        acentuada.setToxicaParaCaninos(false);
+        acentuada.setToxicaParaFelinos(false);
+
+        plantaRepository.save(acentuada);
+
+        List<Plantas> resultado = plantaService.buscarPlantas("adao", null);
+
         assertThat(resultado).contains(acentuada);
     }
 

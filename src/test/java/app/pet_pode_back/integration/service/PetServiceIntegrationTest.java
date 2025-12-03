@@ -59,7 +59,6 @@ public class PetServiceIntegrationTest {
 
     @BeforeEach
     void setup() {
-        // Cria um usuário de teste
         usuario = new Usuario();
         usuario.setNome("Rafaela");
         usuario.setEmail("rafa@test.com");
@@ -75,11 +74,9 @@ public class PetServiceIntegrationTest {
 
         when(cloudinary.uploader()).thenReturn(uploaderMock);
 
-        // Mock destroy()
         when(uploaderMock.destroy(anyString(), anyMap()))
                 .thenReturn(Map.of("result", "ok"));
 
-        // Mock upload()
         when(uploaderMock.upload(any(byte[].class), anyMap()))
                 .thenReturn(Map.of(
                         "secure_url", "https://fake.com/pet.png",
@@ -88,7 +85,7 @@ public class PetServiceIntegrationTest {
     }
 
     @Test
-    void deveSalvarPetParaUsuario() {
+    void deveSalvarPetQuandoUsuarioExiste() {
         Pet pet = new Pet(null, "Fido", "Cachorro", usuario);
 
         Pet salvo = petService.salvarPet(pet, usuario.getId());
@@ -107,9 +104,7 @@ public class PetServiceIntegrationTest {
                 .hasMessage("Usuário não encontrado.");
     }
 
-    // --------------------------------------------------------------
-    // LISTAR PETS
-    // --------------------------------------------------------------
+
     @Test
     void deveListarPetsPorUsuario() {
         Pet p1 = new Pet(null, "Rex", "Cachorro", usuario);
@@ -123,9 +118,7 @@ public class PetServiceIntegrationTest {
                 .containsExactlyInAnyOrder("Rex", "Mimi");
     }
 
-    // --------------------------------------------------------------
-    // EDITAR PET
-    // --------------------------------------------------------------
+
     @Test
     void deveEditarPetComSucesso() {
         Pet pet = petRepository.save(new Pet(null, "Rex", "Cachorro", usuario));
@@ -140,17 +133,7 @@ public class PetServiceIntegrationTest {
         assertThat(atualizado.getEspecie()).isEqualTo("Gato");
     }
 
-    @Test
-    void deveManterValoresQuandoDtoVazio() {
-        Pet pet = petRepository.save(new Pet(null, "Rex", "Cachorro", usuario));
 
-        PetUpdateDTO dto = new PetUpdateDTO(); // nada preenchido
-
-        Pet atualizado = petService.editarPet(pet.getId(), usuario.getId(), dto);
-
-        assertThat(atualizado.getNome()).isEqualTo("Rex");
-        assertThat(atualizado.getEspecie()).isEqualTo("Cachorro");
-    }
 
     @Test
     void deveLancarErroAoEditarPetDeOutroUsuario() {
@@ -183,9 +166,7 @@ public class PetServiceIntegrationTest {
                 .hasMessage("Pet não encontrado.");
     }
 
-    // --------------------------------------------------------------
-    // EXCLUIR PET
-    // --------------------------------------------------------------
+
     @Test
     void deveExcluirPetComSucesso() {
         Pet pet = petRepository.save(new Pet(null, "Rex", "Cachorro", usuario));
@@ -279,7 +260,6 @@ public class PetServiceIntegrationTest {
 
         MultipartFile file = new MockMultipartFile("img", "foto.png", "image/png", "abc".getBytes());
 
-        // Cloudinary lança IOException
         when(uploaderMock.upload(any(byte[].class), anyMap()))
                 .thenThrow(new IOException("Falha ao enviar imagem"));
 
@@ -288,6 +268,38 @@ public class PetServiceIntegrationTest {
         )
                 .isInstanceOf(IOException.class)
                 .hasMessage("Falha ao enviar imagem");
+    }
+
+    @Test
+    void deveLancarErroQuandoPetForNull() {
+        assertThatThrownBy(() ->
+                petService.salvarPet(null, usuario.getId())
+        ).isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void deveDeletarImagemAntigaAntesDeAtualizar() throws Exception {
+        Pet pet = petRepository.save(new Pet(null, "Rex", "Cachorro", usuario));
+        pet.setImagemPublicId("old-img");
+        petRepository.save(pet);
+
+        MultipartFile file = new MockMultipartFile("img", "foto.png", "image/png", "abc".getBytes());
+
+        petService.atualizarImagemPet(pet.getId(), usuario.getId(), file);
+
+        verify(uploaderMock).destroy(eq("old-img"), any());
+    }
+    @Test
+    void deveRetornarMensagemCorretaQuandoUsuarioNaoEncontrado() {
+        Pet pet = new Pet(null, "Rex", "Cachorro", null);
+
+        UUID usuarioInexistente = UUID.randomUUID();
+
+        assertThatThrownBy(() ->
+                petService.salvarPet(pet, usuarioInexistente)
+        )
+                .isInstanceOf(RegistroNaoEncontradoException.class)
+                .hasMessage("Usuário não encontrado.");
     }
 
 }

@@ -3,6 +3,7 @@ package app.pet_pode_back.integration.controller;
 
 
 import app.pet_pode_back.dto.PetUpdateDTO;
+import app.pet_pode_back.exception.RegistroNaoEncontradoException;
 import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.PetRepository;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 @SpringBootTest
@@ -117,7 +119,6 @@ public class PetControllerIntegrationTest {
                 .andExpect(status().isNoContent());
     }
 
-    // --- SAD PATHS ---
 
     @Test
     void naoDeveCadastrarPetSemNomeValido() throws Exception {
@@ -159,4 +160,42 @@ public class PetControllerIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.mensagem", containsString("O header Authorization é obrigatório")));
     }
+
+    @Test
+    void naoDeveExcluirPetDeOutroUsuario() throws Exception {
+        Usuario outroUsuario = new Usuario();
+        outroUsuario.setNome("Outro");
+        outroUsuario.setEmail("outro@teste.com");
+        outroUsuario.setSenha("123456");
+        outroUsuario = usuarioRepository.save(outroUsuario);
+
+        Pet pet = new Pet(null, "Rex", "Cachorro", outroUsuario);
+        pet = petRepository.save(pet);
+
+        mockMvc.perform(delete("/pet/{id}", pet.getId())
+                        .header("Authorization", token))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.mensagem", containsString("Você não tem permissão")));
+    }
+    @Test
+    void naoDeveEditarPetDeOutroUsuario() throws Exception {
+        Usuario outroUsuario = new Usuario();
+        outroUsuario.setNome("Outro");
+        outroUsuario.setEmail("outro@teste.com");
+        outroUsuario.setSenha("123456");
+        outroUsuario = usuarioRepository.save(outroUsuario);
+
+        Pet pet = new Pet(null, "Rex", "Cachorro", outroUsuario);
+        pet = petRepository.save(pet);
+
+        PetUpdateDTO dto = new PetUpdateDTO("NovoNome", "Cachorro");
+
+        mockMvc.perform(put("/pet/{id}", pet.getId())
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.mensagem", containsString("Você não tem permissão")));
+    }
+
 }
