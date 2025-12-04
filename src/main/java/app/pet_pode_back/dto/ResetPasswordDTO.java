@@ -1,4 +1,5 @@
 package app.pet_pode_back.dto;
+
 import jakarta.validation.constraints.NotBlank;
 
 public class ResetPasswordDTO {
