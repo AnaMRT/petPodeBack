@@ -142,4 +142,28 @@ class FavoritosControllerTest {
                         .header("Authorization", "Bearer tok3"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void deveRetornarErro400QuandoTokenForInvalidoNoRemover() throws Exception {
+        when(jwtUtil.extrairUsuarioId("token-invalido"))
+                .thenThrow(new IllegalArgumentException("Token inválido."));
+
+        mockMvc.perform(delete("/favoritos/{id}", plantaId)
+                        .header("Authorization", "Bearer token-invalido"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value("Token inválido."));
+    }
+
+    @Test
+    void deveRetornarErro400QuandoTokenForInvalidoNoListar() throws Exception {
+        when(jwtUtil.extrairUsuarioId("token-invalido"))
+                .thenThrow(new IllegalArgumentException("Token inválido."));
+
+        mockMvc.perform(get("/favoritos")
+                        .header("Authorization", "Bearer token-invalido")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value("Token inválido."));
+    }
+
 }

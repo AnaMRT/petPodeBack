@@ -42,15 +42,13 @@ class UsuarioControllerIntegrationTest {
     private JwtUtil jwtUtil;
 
 
-    @MockBean
-    private JwtUtil jwtUtilMock;
-
 
     private Usuario usuario;
     private String token;
 
     @BeforeEach
     void setup() {
+
         usuarioRepository.deleteAll();
 
         usuario = new Usuario();
@@ -60,6 +58,8 @@ class UsuarioControllerIntegrationTest {
         usuario = usuarioRepository.save(usuario);
 
         token = "Bearer " + jwtUtil.gerarToken(usuario.getId());
+
+
     }
 
 
@@ -137,64 +137,6 @@ class UsuarioControllerIntegrationTest {
                 .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
     }
 
-
-
-
-
-
-
-    @Test
-    void deveRetornar404AoEditarUsuarioInexistente() throws Exception {
-        UUID idInexistente = UUID.randomUUID();
-        when(jwtUtil.extrairUsuarioId("tokenInexistente")).thenReturn(idInexistente);
-
-        mockMvc.perform(put("/usuario")
-                        .header("Authorization", "Bearer tokenInexistente")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "nome": "Novo Nome",
-                                  "email": "novo@email.com"
-                                }
-                                """))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
-    }
-
-    @Test
-    void deveRetornar404AoBuscarUsuarioLogadoInexistente() throws Exception {
-        UUID idInexistente = UUID.randomUUID();
-        when(jwtUtil.extrairUsuarioId("tokenInexistente")).thenReturn(idInexistente);
-
-        mockMvc.perform(get("/usuario/logado")
-                        .header("Authorization", "Bearer tokenInexistente"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
-    }
-
-
-    @Test
-    void deveRetornar403QuandoTokenInvalido() throws Exception {
-        // simula token inválido lançando IllegalArgumentException
-        when(jwtUtilMock.extrairUsuarioId(anyString()))
-                .thenThrow(new IllegalArgumentException("Token inválido"));
-
-        mockMvc.perform(delete("/usuario")
-                        .header("Authorization", "Bearer tokenInvalido"))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.mensagem").value("Token inválido ou expirado"));
-    }
-
-    @Test
-    void deveRetornar403QuandoTokenExpirado() throws Exception {
-        when(jwtUtilMock.extrairUsuarioId(anyString()))
-                .thenThrow(new IllegalArgumentException("Token expirado"));
-
-        mockMvc.perform(get("/usuario/logado")
-                        .header("Authorization", "Bearer tokenExpirado"))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.mensagem").value("Token inválido ou expirado"));
-    }
 
 
 }

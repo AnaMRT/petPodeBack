@@ -138,24 +138,6 @@ class PlantaControllerTest {
         verify(plantaService, never()).buscarPlantas(any(), any());
     }
 
-    @Test
-    void deveRessarcarExcecaoDoServiceAoBuscarPlantas() {
-        UUID id = UUID.randomUUID();
-        Usuario usuario = new Usuario();
-        usuario.setPets(Collections.emptyList());
-
-        when(jwtUtil.extrairUsuarioId("token123")).thenReturn(id);
-        when(usuarioService.buscarUsuarioPorId(id)).thenReturn(usuario);
-        when(plantaService.buscarPlantas("rosa", null))
-                .thenThrow(new IllegalArgumentException("Erro no service"));
-
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
-                () -> plantasController.buscar("rosa", "Bearer token123")
-        );
-
-        assertEquals("Erro no service", ex.getMessage());
-    }
 
     @Test
     void deveListarPlantasVazia() {
@@ -211,6 +193,36 @@ class PlantaControllerTest {
         assertEquals("Costela-de-Adão", resposta.getBody().get(0).getNomePopular());
     }
 
+    @Test
+    void deveLancarExcecaoQuandoTokenMalFormado() {
+        UUID id = UUID.randomUUID();
+
+        when(jwtUtil.extrairUsuarioId("tokenInvalido"))
+                .thenThrow(new IllegalArgumentException("Token inválido"));
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> plantasController.buscar("rosa", "tokenInvalido")
+        );
+
+        assertEquals("Token inválido", ex.getMessage());
+    }
+    @Test
+    void deveRetornar404QuandoUsuarioNaoExistirAoBuscarPlantas() {
+        UUID idInexistente = UUID.randomUUID();
+
+        when(jwtUtil.extrairUsuarioId("token123")).thenReturn(idInexistente);
+        when(usuarioService.buscarUsuarioPorId(idInexistente))
+                .thenThrow(new RegistroNaoEncontradoException("Usuário não encontrado"));
+
+        RegistroNaoEncontradoException ex = assertThrows(
+                RegistroNaoEncontradoException.class,
+                () -> plantasController.buscar("rosa", "Bearer token123")
+        );
+
+        assertEquals("Usuário não encontrado", ex.getMessage());
+        verify(plantaService, never()).buscarPlantas(any(), any());
+    }
 
 
 

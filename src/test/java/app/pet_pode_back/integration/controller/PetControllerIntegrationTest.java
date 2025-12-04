@@ -9,19 +9,24 @@ import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.PetRepository;
 import app.pet_pode_back.repository.UsuarioRepository;
 import app.pet_pode_back.security.JwtUtil;
+import com.cloudinary.Cloudinary;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.*;
 
 import java.util.List;
 import java.util.UUID;
+import com.cloudinary.Uploader;
 
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.when;
@@ -45,6 +50,9 @@ public class PetControllerIntegrationTest {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @MockBean
+    private Cloudinary cloudinary;
+
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -63,13 +71,15 @@ public class PetControllerIntegrationTest {
         usuario = usuarioRepository.save(usuario);
 
         token = "Bearer " + jwtUtil.gerarToken(usuario.getId());
+
+
     }
 
     @Test
     void deveCadastrarPetComSucesso() throws Exception {
         Pet pet = new Pet();
         pet.setNome("Rex");
-        pet.setEspecie("Cachorro");
+        pet.setEspecie("Canino");
 
         mockMvc.perform(post("/pet")
                         .header("Authorization", token)
@@ -78,13 +88,13 @@ public class PetControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.nome").value("Rex"))
-                .andExpect(jsonPath("$.especie").value("Cachorro"));
+                .andExpect(jsonPath("$.especie").value("Canino"));
     }
 
     @Test
     void deveListarPetsDoUsuario() throws Exception {
-        Pet pet1 = new Pet(null, "Rex", "Cachorro", usuario);
-        Pet pet2 = new Pet(null, "Miau", "Gato", usuario);
+        Pet pet1 = new Pet(null, "Rex", "Canino", usuario);
+        Pet pet2 = new Pet(null, "Miau", "Felino", usuario);
         petRepository.saveAll(List.of(pet1, pet2));
 
         mockMvc.perform(get("/pet")
@@ -96,10 +106,10 @@ public class PetControllerIntegrationTest {
 
     @Test
     void deveEditarPetComSucesso() throws Exception {
-        Pet pet = new Pet(null, "Rex", "Cachorro", usuario);
+        Pet pet = new Pet(null, "Rex", "Canino", usuario);
         pet = petRepository.save(pet);
 
-        PetUpdateDTO dto = new PetUpdateDTO("Rexie", "Cachorro");
+        PetUpdateDTO dto = new PetUpdateDTO("Rexie", "Canino");
 
         mockMvc.perform(put("/pet/{id}", pet.getId())
                         .header("Authorization", token)
@@ -111,7 +121,7 @@ public class PetControllerIntegrationTest {
 
     @Test
     void deveExcluirPetComSucesso() throws Exception {
-        Pet pet = new Pet(null, "Rex", "Cachorro", usuario);
+        Pet pet = new Pet(null, "Rex", "Canino", usuario);
         pet = petRepository.save(pet);
 
         mockMvc.perform(delete("/pet/{id}", pet.getId())
@@ -124,7 +134,7 @@ public class PetControllerIntegrationTest {
     void naoDeveCadastrarPetSemNomeValido() throws Exception {
         Pet pet = new Pet();
         pet.setNome("R"); // Menor que o mínimo 2
-        pet.setEspecie("Cachorro");
+        pet.setEspecie("Canino");
 
         mockMvc.perform(post("/pet")
                         .header("Authorization", token)
@@ -136,7 +146,7 @@ public class PetControllerIntegrationTest {
 
     @Test
     void naoDeveEditarPetQueNaoExiste() throws Exception {
-        PetUpdateDTO dto = new PetUpdateDTO("NovoNome", "Cachorro");
+        PetUpdateDTO dto = new PetUpdateDTO("NovoNome", "Canino");
 
         mockMvc.perform(put("/pet/{id}", UUID.randomUUID())
                         .header("Authorization", token)
@@ -169,7 +179,7 @@ public class PetControllerIntegrationTest {
         outroUsuario.setSenha("123456");
         outroUsuario = usuarioRepository.save(outroUsuario);
 
-        Pet pet = new Pet(null, "Rex", "Cachorro", outroUsuario);
+        Pet pet = new Pet(null, "Rex", "Canino", outroUsuario);
         pet = petRepository.save(pet);
 
         mockMvc.perform(delete("/pet/{id}", pet.getId())
@@ -178,6 +188,41 @@ public class PetControllerIntegrationTest {
                 .andExpect(jsonPath("$.mensagem", containsString("Você não tem permissão")));
     }
     @Test
+    void deveRetornarNotFoundQuandoUsuarioNaoExisteAoCadastrar() throws Exception {
+        // Criando um token com UUID que não existe no banco
+        UUID usuarioInexistente = UUID.randomUUID();
+        String tokenInvalido = "Bearer " + jwtUtil.gerarToken(usuarioInexistente);
+
+        Pet pet = new Pet();
+        pet.setNome("Rex");
+        pet.setEspecie("Canino");
+
+        mockMvc.perform(post("/pet")
+                        .header("Authorization", tokenInvalido)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(pet)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem", containsString("Usuário não encontrado")));
+    }
+
+    @Test
+    void deveRetornarBadRequestQuandoNomeInvalidoNaEdicao() throws Exception {
+        Pet pet = new Pet(null, "Rex", "Canino", usuario);
+        pet = petRepository.save(pet);
+
+        PetUpdateDTO dto = new PetUpdateDTO();
+        dto.setNome("A"); // Nome inválido (menor que 2)
+        dto.setEspecie("Canino");
+
+        mockMvc.perform(put("/pet/{id}", pet.getId())
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem", containsString("O nome deve ter entre 2 e 100 caracteres")));
+    }
+
+    @Test
     void naoDeveEditarPetDeOutroUsuario() throws Exception {
         Usuario outroUsuario = new Usuario();
         outroUsuario.setNome("Outro");
@@ -185,10 +230,10 @@ public class PetControllerIntegrationTest {
         outroUsuario.setSenha("123456");
         outroUsuario = usuarioRepository.save(outroUsuario);
 
-        Pet pet = new Pet(null, "Rex", "Cachorro", outroUsuario);
+        Pet pet = new Pet(null, "Rex", "Canino", outroUsuario);
         pet = petRepository.save(pet);
 
-        PetUpdateDTO dto = new PetUpdateDTO("NovoNome", "Cachorro");
+        PetUpdateDTO dto = new PetUpdateDTO("NovoNome", "Canino");
 
         mockMvc.perform(put("/pet/{id}", pet.getId())
                         .header("Authorization", token)

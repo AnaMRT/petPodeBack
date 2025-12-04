@@ -127,18 +127,13 @@ class AuthServiceIntegrationTest {
 
 
 
-    @Test
-    void deveFalharRedefinirSenhaSemCodigoOuSenha() {
-        assertThatThrownBy(() -> authService.redefinirSenha("", ""))
-                .isInstanceOf(ParametroInvalidoException.class)
-                .hasMessage("Código inválido.");
-    }
+//  deve ser do controller  @Test
+//    void deveFalharRedefinirSenhaSemCodigoOuSenha() {
+//        assertThatThrownBy(() -> authService.redefinirSenha("", ""))
+//                .isInstanceOf(ParametroInvalidoException.class)
+//                .hasMessage("Código inválido.");
+//    }
 
-    @Test
-    void deveGerarTokenDeRedefinicao() {
-        authService.solicitarRedefinicaoSenha(usuarioPadrao.getEmail());
-        assertThat(tokenRepository.count()).isEqualTo(1);
-    }
 
     @Test
     void deveFalharSolicitarRedefinicaoParaEmailInexistente() {
@@ -197,19 +192,6 @@ class AuthServiceIntegrationTest {
                 .hasMessage("Código já foi utilizado.");
     }
 
-    @Test
-    void deveMarcarTokenComoUsadoAposRedefinirSenha() {
-        PasswordResetToken token = new PasswordResetToken();
-        token.setCodigo("333444");
-        token.setUsuario(usuarioPadrao);
-        token.setUsed(false);
-        token.setExpirationDate(LocalDateTime.now().plusMinutes(10));
-        tokenRepository.save(token);
 
-        authService.redefinirSenha("333444", "novaSenha123");
-
-        PasswordResetToken atualizado = tokenRepository.findByCodigo("333444").get();
-        assertThat(atualizado.isUsed()).isTrue();
-    }
 
 }

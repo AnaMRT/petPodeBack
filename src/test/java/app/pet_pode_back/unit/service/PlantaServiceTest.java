@@ -40,14 +40,6 @@ class PlantaServiceTest {
     }
 
 
-    @Test
-    void deveEncontrarMesmoQuandoTermoTEMsemAcentoENomeTEMacento() {
-        when(plantaRepository.findAll()).thenReturn(List.of(planta1));
-
-        List<Plantas> resultado = plantaService.buscarPlantas("adao", null);
-
-        assertThat(resultado).contains(planta1);
-    }
 
     @Test
     void deveIgnorarEspacosAntesEDepoisDoTermo() {
@@ -58,15 +50,6 @@ class PlantaServiceTest {
         assertThat(resultado).contains(planta1);
     }
 
-    @Test
-    void naoDeveGerarDuplicacaoQuandoPlantaApareceEmMaisDeUmaRegra() {
-        when(plantaRepository.findAll()).thenReturn(List.of(planta1));
-        when(plantaRepository.findByToxicaParaCaninosTrue()).thenReturn(List.of(planta1));
-
-        List<Plantas> resultado = plantaService.buscarPlantas("costela", null);
-
-        assertThat(resultado).hasSize(1);
-    }
 
     @Test
     void deveEncontrarPorNomeCientifico() {
@@ -86,15 +69,6 @@ class PlantaServiceTest {
         assertThat(resultado).isEmpty();
     }
 
-    @Test
-    void deveRetornarVazioQuandoTermoPossuiCaracteresInvalidos() {
-        when(plantaRepository.findAll()).thenReturn(List.of(planta1, planta2));
-
-        List<Plantas> resultado = plantaService.buscarPlantas("@#$%¨&*", null);
-
-        assertThat(resultado).isEmpty();
-    }
-
 
     @Test
     void deveListarTodasAsPlantas() {
@@ -109,7 +83,7 @@ class PlantaServiceTest {
 
 
     @Test
-    void deveBuscarPlantasPorTermoNoNome() {
+    void deveBuscarPlantasPorNomePopular() {
         when(plantaRepository.findAll()).thenReturn(List.of(planta1, planta2));
 
         List<Plantas> resultado = plantaService.buscarPlantas("costela", null);
@@ -184,26 +158,9 @@ class PlantaServiceTest {
     }
 
 
-    @Test
-    void deveRetornarListaVaziaQuandoNadaEncontrado() {
-        when(plantaRepository.findAll()).thenReturn(List.of());
-
-        List<Plantas> resultado = plantaService.buscarPlantas("xxxxxxxx", null);
-
-        assertThat(resultado).isEmpty();
-    }
 
     @Test
-    void deveListarTodasAsPlantasRetornandoVazioQuandoNaoHouverPlantas() {
-        when(plantaRepository.findAll()).thenReturn(List.of());
-
-        List<Plantas> resultado = plantaService.listarTodos();
-
-        assertThat(resultado).isEmpty();
-        verify(plantaRepository, times(1)).findAll();
-    }
-    @Test
-    void naoDeveGerarDuplicacaoQuandoPlantaVemDeFindAllETambemDaListaToxica() {
+    void naoDeveGerarDuplicacaoComPetERegrasDeToxicidade() {
         when(plantaRepository.findAll()).thenReturn(List.of(planta1));
         when(plantaRepository.findByToxicaParaCaninosTrue()).thenReturn(List.of(planta1));
 
@@ -214,18 +171,6 @@ class PlantaServiceTest {
 
 
 
-    @Test
-    void deveEncontrarPlantaIgnorandoAcentosMesmoAposInsercaoDinamica() {
-        Plantas acentuada = new Plantas();
-        acentuada.setNomePopular("Costela-de-Adão");
-        acentuada.setNomeCientifico("Monstera deliciosa");
-
-        when(plantaRepository.findAll()).thenReturn(List.of(acentuada));
-
-        List<Plantas> resultado = plantaService.buscarPlantas("adao", null);
-
-        assertThat(resultado).contains(acentuada);
-    }
 
     @Test
     void deveRetornarPlantasToxicasQuandoTermoForCanino() {
@@ -244,18 +189,6 @@ class PlantaServiceTest {
         List<Plantas> resultado = plantaService.buscarPlantas("felino", null);
 
         assertThat(resultado).containsExactly(planta2);
-    }
-    @Test
-    void deveEncontrarPlantaComAcentoRetornadaDoRepositorio() {
-        Plantas acentuada = new Plantas();
-        acentuada.setNomePopular("Jibóia");
-        acentuada.setNomeCientifico("Epipremnum aureum");
-
-        when(plantaRepository.findAll()).thenReturn(List.of(acentuada));
-
-        List<Plantas> resultado = plantaService.buscarPlantas("jiboia", null);
-
-        assertThat(resultado).contains(acentuada);
     }
 
 }

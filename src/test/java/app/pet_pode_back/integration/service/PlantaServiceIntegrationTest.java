@@ -108,11 +108,6 @@ class PlantaServiceIntegrationTest {
         assertThat(resultado).contains(planta1);
     }
 
-    @Test
-    void deveEncontrarMesmoQuandoTermoSemAcento() {
-        List<Plantas> resultado = plantaService.buscarPlantas("samambaia", null);
-        assertThat(resultado).contains(planta1);
-    }
 
     @Test
     void naoDeveGerarDuplicacaoQuandoPlantaApareceEmMaisDeUmaRegra() {
@@ -160,7 +155,7 @@ class PlantaServiceIntegrationTest {
         assertThat(resultado).contains(acentuada);
     }
     @Test
-    void deveRetornarPlantasToxicasParaCaninosQuandoTermoForCachorro() {
+    void deveRetornarPlantasToxicasParaCaninosQuandoTermoRelacionadoAcaes() {
         List<Plantas> resultado = plantaService.buscarPlantas("cachorro", null);
 
         assertThat(resultado).contains(planta2);
@@ -184,20 +179,6 @@ class PlantaServiceIntegrationTest {
     void deveRetornarVazioMesmoComBDPreenchidoQuandoTermoInvalido() {
         List<Plantas> resultado = plantaService.buscarPlantas("@@@###", null);
         assertThat(resultado).isEmpty();
-    }
-    @Test
-    void deveEncontrarPlantasIgnorandoAcentosEmListaMista() {
-        Plantas acentuada = new Plantas();
-        acentuada.setNomePopular("Costela-de-Adão");
-        acentuada.setNomeCientifico("Monstera deliciosa");
-        acentuada.setToxicaParaCaninos(false);
-        acentuada.setToxicaParaFelinos(false);
-
-        plantaRepository.save(acentuada);
-
-        List<Plantas> resultado = plantaService.buscarPlantas("adao", null);
-
-        assertThat(resultado).contains(acentuada);
     }
 
 }

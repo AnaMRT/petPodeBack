@@ -70,6 +70,7 @@ class PetControllerTest {
         pet = new Pet();
         pet.setId(petId);
         pet.setNome("Rex");
+        pet.setEspecie("Canino");
 
         when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuarioId);
     }
@@ -85,7 +86,9 @@ class PetControllerTest {
                         .content(mapper.writeValueAsString(pet)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(petId.toString()))
-                .andExpect(jsonPath("$.nome").value("Rex"));
+                .andExpect(jsonPath("$.nome").value("Rex"))
+                        .andExpect(jsonPath("$.especie").value("Canino"));
+
     }
 
     @Test
@@ -111,6 +114,7 @@ class PetControllerTest {
     void deveEditarPetComSucesso() throws Exception {
         PetUpdateDTO dto = new PetUpdateDTO();
         dto.setNome("Novo nome");
+        dto.setEspecie("Felino");
 
         when(petService.editarPet(eq(petId), eq(usuarioId), any(PetUpdateDTO.class)))
                 .thenReturn(pet);
@@ -120,8 +124,11 @@ class PetControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(petId.toString()));
+                .andExpect(jsonPath("$.id").value(petId.toString()))
+                .andExpect(jsonPath("$.nome").value("Rex"));
+        // "Rex" porque está mockado no pet retornado
     }
+
 
     @Test
     void deveAtualizarImagemComSucesso() throws Exception {
@@ -149,6 +156,8 @@ class PetControllerTest {
                 .thenThrow(new PetNotFoundException("Pet não encontrado."));
 
         PetUpdateDTO dto = new PetUpdateDTO();
+        dto.setNome("NovoNome");
+        dto.setEspecie("Felino"); // obrigatório agora
 
         mockMvc.perform(put("/pet/" + petId)
                         .header("Authorization", "Bearer token")
@@ -276,6 +285,7 @@ class PetControllerTest {
     void naoDeveEditarPetDeOutroUsuario() throws Exception {
         PetUpdateDTO dto = new PetUpdateDTO();
         dto.setNome("NovoNome");
+        dto.setEspecie("Felino"); // obrigatório agora
 
         doThrow(new SemPermissaoException("Você não tem permissão para alterar esse pet."))
                 .when(petService).editarPet(any(), eq(usuarioId), any());
@@ -287,4 +297,5 @@ class PetControllerTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.mensagem").value("Você não tem permissão para alterar esse pet."));
     }
+
 }

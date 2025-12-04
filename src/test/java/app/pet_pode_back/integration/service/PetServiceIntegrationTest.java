@@ -86,7 +86,7 @@ public class PetServiceIntegrationTest {
 
     @Test
     void deveSalvarPetQuandoUsuarioExiste() {
-        Pet pet = new Pet(null, "Fido", "Cachorro", usuario);
+        Pet pet = new Pet(null, "Fido", "Canino", usuario);
 
         Pet salvo = petService.salvarPet(pet, usuario.getId());
 
@@ -96,7 +96,7 @@ public class PetServiceIntegrationTest {
 
     @Test
     void deveLancarErroAoSalvarPetComUsuarioInexistente() {
-        Pet pet = new Pet(null, "Fido", "Cachorro", null);
+        Pet pet = new Pet(null, "Fido", "Canino", null);
 
         assertThatThrownBy(() ->
                 petService.salvarPet(pet, UUID.randomUUID()))
@@ -107,8 +107,8 @@ public class PetServiceIntegrationTest {
 
     @Test
     void deveListarPetsPorUsuario() {
-        Pet p1 = new Pet(null, "Rex", "Cachorro", usuario);
-        Pet p2 = new Pet(null, "Mimi", "Gato", usuario);
+        Pet p1 = new Pet(null, "Rex", "Canino", usuario);
+        Pet p2 = new Pet(null, "Mimi", "Felino", usuario);
         petRepository.saveAll(List.of(p1, p2));
 
         List<Pet> pets = petService.listarPetsPorUsuario(usuario.getId());
@@ -121,16 +121,16 @@ public class PetServiceIntegrationTest {
 
     @Test
     void deveEditarPetComSucesso() {
-        Pet pet = petRepository.save(new Pet(null, "Rex", "Cachorro", usuario));
+        Pet pet = petRepository.save(new Pet(null, "Rex", "Canino", usuario));
 
         PetUpdateDTO dto = new PetUpdateDTO();
         dto.setNome("Thor");
-        dto.setEspecie("Gato");
+        dto.setEspecie("Felino");
 
         Pet atualizado = petService.editarPet(pet.getId(), usuario.getId(), dto);
 
         assertThat(atualizado.getNome()).isEqualTo("Thor");
-        assertThat(atualizado.getEspecie()).isEqualTo("Gato");
+        assertThat(atualizado.getEspecie()).isEqualTo("Felino");
     }
 
 
@@ -143,12 +143,11 @@ public class PetServiceIntegrationTest {
         outro.setSenha("123");
         outro = usuarioRepository.save(outro);
 
-        Pet pet = petRepository.save(new Pet(null, "Rex", "Cachorro", outro));
+        Pet pet = petRepository.save(new Pet(null, "Rex", "Canino", outro));
 
         PetUpdateDTO dto = new PetUpdateDTO();
         dto.setNome("Novo");
-
-        UUID usuarioErrado = UUID.randomUUID();
+        dto.setEspecie("Felino"); // AGORA OBRIGATÓRIO
 
         assertThatThrownBy(() ->
                 petService.editarPet(pet.getId(), usuario.getId(), dto))
@@ -156,9 +155,12 @@ public class PetServiceIntegrationTest {
                 .hasMessage("Você não tem permissão para alterar esse pet.");
     }
 
+
     @Test
     void deveLancarErroAoEditarPetInexistente() {
         PetUpdateDTO dto = new PetUpdateDTO();
+        dto.setNome("Qualquer");
+        dto.setEspecie("Felino"); // OBRIGATÓRIO
 
         assertThatThrownBy(() ->
                 petService.editarPet(UUID.randomUUID(), usuario.getId(), dto))
@@ -169,7 +171,7 @@ public class PetServiceIntegrationTest {
 
     @Test
     void deveExcluirPetComSucesso() {
-        Pet pet = petRepository.save(new Pet(null, "Rex", "Cachorro", usuario));
+        Pet pet = petRepository.save(new Pet(null, "Rex", "Canino", usuario));
 
         assertThatCode(() ->
                 petService.excluirPetDoUsuario(usuario.getId(), pet.getId()))
@@ -186,7 +188,7 @@ public class PetServiceIntegrationTest {
         outro.setSenha("123");
         outro = usuarioRepository.save(outro);
 
-        Pet pet = petRepository.save(new Pet(null, "Rex", "Cachorro", outro));
+        Pet pet = petRepository.save(new Pet(null, "Rex", "Canino", outro));
 
         assertThatThrownBy(() ->
                 petService.excluirPetDoUsuario(usuario.getId(), pet.getId()))
@@ -203,7 +205,7 @@ public class PetServiceIntegrationTest {
 
     @Test
     void deveAtualizarImagemPetComSucesso() throws IOException {
-        Pet pet = petRepository.save(new Pet(null, "Rex", "Cachorro", usuario));
+        Pet pet = petRepository.save(new Pet(null, "Rex", "Canino", usuario));
 
         Uploader uploaderMock = mock(Uploader.class);
         Map<String, Object> resultadoUpload = Map.of(
@@ -244,7 +246,7 @@ public class PetServiceIntegrationTest {
         outro.setSenha("123456");
         outro = usuarioRepository.save(outro);
 
-        Pet pet = petRepository.save(new Pet(null, "Rex", "Cachorro", outro));
+        Pet pet = petRepository.save(new Pet(null, "Rex", "Canino", outro));
 
         MultipartFile file = new MockMultipartFile("img", "foto.png", "image/png", "abc".getBytes());
 
@@ -256,7 +258,7 @@ public class PetServiceIntegrationTest {
     }
     @Test
     void deveLancarErroQuandoUploadFalhar() throws Exception {
-        Pet pet = petRepository.save(new Pet(null, "Rex", "Cachorro", usuario));
+        Pet pet = petRepository.save(new Pet(null, "Rex", "Canino", usuario));
 
         MultipartFile file = new MockMultipartFile("img", "foto.png", "image/png", "abc".getBytes());
 
@@ -279,7 +281,7 @@ public class PetServiceIntegrationTest {
 
     @Test
     void deveDeletarImagemAntigaAntesDeAtualizar() throws Exception {
-        Pet pet = petRepository.save(new Pet(null, "Rex", "Cachorro", usuario));
+        Pet pet = petRepository.save(new Pet(null, "Rex", "Canino", usuario));
         pet.setImagemPublicId("old-img");
         petRepository.save(pet);
 
@@ -291,7 +293,7 @@ public class PetServiceIntegrationTest {
     }
     @Test
     void deveRetornarMensagemCorretaQuandoUsuarioNaoEncontrado() {
-        Pet pet = new Pet(null, "Rex", "Cachorro", null);
+        Pet pet = new Pet(null, "Rex", "Canino", null);
 
         UUID usuarioInexistente = UUID.randomUUID();
 

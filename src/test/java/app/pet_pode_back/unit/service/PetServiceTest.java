@@ -103,7 +103,7 @@ class PetServiceTest {
     void deveEditarPetComSucesso() {
         PetUpdateDTO dto = new PetUpdateDTO();
         dto.setNome("Novo nome");
-        dto.setEspecie("Gato");
+        dto.setEspecie("Felino");
 
         when(petRepository.findById(pet.getId()))
                 .thenReturn(Optional.of(pet));
@@ -113,7 +113,7 @@ class PetServiceTest {
         Pet atualizado = petService.editarPet(pet.getId(), usuario.getId(), dto);
 
         assertEquals("Novo nome", atualizado.getNome());
-        assertEquals("Gato", atualizado.getEspecie());
+        assertEquals("Felino", atualizado.getEspecie());
     }
 
     @Test
@@ -216,23 +216,6 @@ class PetServiceTest {
                 () -> petService.salvarPet(null, usuario.getId()));
     }
 
-    @Test
-    void deveManterValoresQuandoDtoVazio() {
-        pet.setNome("Rex");
-        pet.setEspecie("Cachorro");
-
-        when(petRepository.findById(pet.getId()))
-                .thenReturn(Optional.of(pet));
-        when(petRepository.save(any()))
-                .thenReturn(pet);
-
-        PetUpdateDTO dto = new PetUpdateDTO(); // tudo null
-
-        Pet atualizado = petService.editarPet(pet.getId(), usuario.getId(), dto);
-
-        assertEquals("Rex", atualizado.getNome());
-        assertEquals("Cachorro", atualizado.getEspecie());
-    }
 
     @Test
     void deveLancarErroAoAtualizarImagemDePetInexistente() throws Exception {

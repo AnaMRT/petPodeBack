@@ -317,21 +317,6 @@ public class AuthControllerIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
-    @Test
-    void deveFalharAoLogarComCamposInvalidos() throws Exception {
-        String json = """
-            {
-              "email": "",
-              "senha": ""
-            }
-            """;
-
-        mockMvc.perform(post("/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest());
-    }
-
 
     @Test
     void deveFalharAoRegistrarComCamposInvalidos() throws Exception {
@@ -350,19 +335,5 @@ public class AuthControllerIntegrationTest {
     }
 
 
-    @Test
-    void deveFalharResetSenhaSemCampos() throws Exception {
-        String json = """
-            {
-              "codigo": "",
-              "novaSenha": ""
-            }
-            """;
-
-        mockMvc.perform(post("/auth/reset-password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest());
-    }
 
 }

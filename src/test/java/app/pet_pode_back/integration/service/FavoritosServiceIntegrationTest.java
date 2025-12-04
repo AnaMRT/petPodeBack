@@ -152,6 +152,29 @@ class FavoritosServiceIntegrationTest {
 
         assertEquals("Planta não encontrada", ex.getMessage());
     }
+    @Test
+    void deveListarFavoritosComSucesso() {
+        // Adiciona uma planta como favorito
+        favoritosService.adicionarFavorito(usuario.getId(), planta.getId());
+
+        // Lista os favoritos
+        Set<Plantas> favoritos = favoritosService.listarFavoritos(usuario.getId());
+
+        // Verifica se o favorito foi retornado corretamente
+        assertEquals(1, favoritos.size());
+        assertTrue(favoritos.contains(planta));
+    }
+
+    @Test
+    void deveLancarErroQuandoUsuarioNaoExisteAoListarFavoritos() {
+        UUID usuarioInexistente = UUID.randomUUID();
+
+        // Tenta listar favoritos de um usuário inexistente
+        RegistroNaoEncontradoException ex = assertThrows(RegistroNaoEncontradoException.class,
+                () -> favoritosService.listarFavoritos(usuarioInexistente));
+
+        assertEquals("Usuário não encontrado", ex.getMessage());
+    }
 
 
 }

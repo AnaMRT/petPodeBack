@@ -122,16 +122,6 @@ class PlantasControllerIntegrationTest {
     }
 
 
-    @Test
-    void deveRetornar404AoRemoverPlantaInexistente() throws Exception {
-        UUID idInexistente = UUID.randomUUID();
-
-        mockMvc.perform(delete("/plantas/" + idInexistente)
-                        .header("Authorization", token))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.mensagem").value("Planta não encontrada"));
-    }
-
 
     @Test
     void deveBuscarMesmoSeUsuarioNaoTemPet() throws Exception {
@@ -158,7 +148,7 @@ class PlantasControllerIntegrationTest {
     }
 
     @Test
-    void deveRetornarListaVaziaQuandoNaoHaPlantas() throws Exception {
+    void deveListarPlantasVazia() throws Exception {
         plantaRepository.deleteAll();
 
         mockMvc.perform(get("/plantas")
@@ -179,6 +169,50 @@ class PlantasControllerIntegrationTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
+    }
+    @Test
+    void deveBuscarPlantasComTermoParcial() throws Exception {
+        Plantas p = new Plantas(
+                null,
+                "Azaleia",
+                "Rhododendron",
+                "Descrição",
+                true,
+                false,
+                null
+        );
+        plantaRepository.save(p);
+
+        // Busca usando parte do nome: "azal"
+        mockMvc.perform(get("/plantas/search")
+                        .param("termo", "azal")
+                        .header("Authorization", token)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].nomePopular").value("Azaleia"));
+    }
+
+    @Test
+    void deveBuscarIgnorandoAcentuacao() throws Exception {
+        // Salva planta com acento
+        Plantas p = new Plantas(
+                null,
+                "Costela-de-Adão",
+                "Monstera deliciosa",
+                "Descrição",
+                false,
+                false,
+                null
+        );
+        plantaRepository.save(p);
+
+        // Busca sem acento: "adao"
+        mockMvc.perform(get("/plantas/search")
+                        .param("termo", "adao")
+                        .header("Authorization", token)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].nomePopular").value("Costela-de-Adão"));
     }
 
 }
