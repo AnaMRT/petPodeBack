@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.UUID;
@@ -41,6 +42,7 @@ public class UsuarioController {
     public ResponseEntity<List<Usuario>> get() {
         return ResponseEntity.status(HttpStatus.OK).body(usuarioService.listarTodos());
     }
+
     @PutMapping
     public ResponseEntity<Usuario> editar(
             @RequestBody @Valid UsuarioUpdateDTO dto,
@@ -51,12 +53,14 @@ public class UsuarioController {
 
         return ResponseEntity.ok(atualizado);
     }
+
     @DeleteMapping
     public ResponseEntity<Void> remover(@RequestHeader("Authorization") String token) {
         UUID usuarioId = extrairId(token);
         usuarioService.remover(usuarioId);
         return ResponseEntity.noContent().build();
     }
+
     @PutMapping(value = "/imagem", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, String>> atualizarImagem(
             @RequestParam("file") MultipartFile file,
@@ -67,6 +71,7 @@ public class UsuarioController {
 
         return ResponseEntity.ok(Map.of("imagemUrl", url));
     }
+
     @GetMapping("/logado")
     public ResponseEntity<Map<String, Object>> getUsuarioLogado(
             @RequestHeader("Authorization") String tokenHeader) {
@@ -77,6 +82,7 @@ public class UsuarioController {
 
         return ResponseEntity.ok(usuario);
     }
+
     private UUID extrairId(String tokenHeader) {
         try {
             String tokenLimpo = tokenHeader.replace("Bearer ", "").trim();

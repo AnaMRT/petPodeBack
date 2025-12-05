@@ -11,8 +11,10 @@ import app.pet_pode_back.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 import java.util.Random;
+
 @Service
 public class AuthService {
 
@@ -77,6 +79,7 @@ public class AuthService {
                 corpoEmail
         );
     }
+
     public void redefinirSenha(String codigo, String novaSenha) {
         PasswordResetToken resetToken = resetTokenRepository.findByCodigo(codigo)
                 .orElseThrow(() -> new ParametroInvalidoException("Código inválido."));

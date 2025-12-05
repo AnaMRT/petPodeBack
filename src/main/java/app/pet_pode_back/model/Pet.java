@@ -3,6 +3,7 @@ package app.pet_pode_back.model;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
+
 import java.util.Objects;
 import java.util.UUID;
 
@@ -26,8 +27,10 @@ public class Pet {
     @JoinColumn(name = "usuario_id")
     @JsonBackReference
     private Usuario usuario;
+
     public Pet() {
     }
+
     public Pet(UUID id, String nome, String especie, Usuario usuario) {
         this.id = id;
         this.nome = nome;
@@ -38,6 +41,7 @@ public class Pet {
     public UUID getId() {
         return id;
     }
+
     public void setId(UUID id) {
         this.id = id;
     }
@@ -69,6 +73,7 @@ public class Pet {
     public String getImagemPublicId() {
         return imagemPublicId;
     }
+
     public void setImagemPublicId(String imagemPublicId) {
         this.imagemPublicId = imagemPublicId;
     }
@@ -76,6 +81,7 @@ public class Pet {
     public Usuario getUsuario() {
         return usuario;
     }
+
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
     }

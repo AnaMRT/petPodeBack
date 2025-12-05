@@ -9,13 +9,11 @@ import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.PetRepository;
 import app.pet_pode_back.repository.UsuarioRepository;
 import app.pet_pode_back.service.PetService;
-
 import com.cloudinary.Cloudinary;
 import com.cloudinary.Uploader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
-
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -74,6 +72,15 @@ class PetServiceTest {
 
         assertEquals(usuario, salvo.getUsuario());
         verify(petRepository, times(1)).save(pet);
+    }
+
+    @Test
+    void deveLancarErroQuandoPetForNullAoSalvar() {
+        when(usuarioRepository.findById(usuario.getId()))
+                .thenReturn(Optional.of(usuario));
+
+        assertThrows(NullPointerException.class,
+                () -> petService.salvarPet(null, usuario.getId()));
     }
 
     @Test
@@ -180,6 +187,58 @@ class PetServiceTest {
         );
     }
 
+    @Test
+    void deveLancarErroAoAtualizarImagemDePetInexistente() throws Exception {
+        when(petRepository.findById(any()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                PetNotFoundException.class,
+                () -> petService.atualizarImagemPet(UUID.randomUUID(), usuario.getId(), file)
+        );
+
+        verify(uploader, never()).upload(any(), any());
+    }
+
+    @Test
+    void deveDeletarImagemAntigaAntesDeAtualizar() throws Exception {
+        pet.setImagemPublicId("old-img");
+
+        when(petRepository.findById(pet.getId()))
+                .thenReturn(Optional.of(pet));
+
+        when(file.getBytes()).thenReturn("img".getBytes());
+        when(uploader.upload(any(), any()))
+                .thenReturn(Map.of("secure_url", "x", "public_id", "y"));
+
+        petService.atualizarImagemPet(pet.getId(), usuario.getId(), file);
+
+        verify(uploader).destroy(eq("old-img"), any());
+    }
+
+    @Test
+    void deveLancarErroQuandoUploadFalhar() throws Exception {
+        when(petRepository.findById(pet.getId())).thenReturn(Optional.of(pet));
+        when(file.getBytes()).thenReturn("abc".getBytes());
+        when(uploader.upload(any(), any())).thenThrow(new IOException("Falha ao enviar imagem"));
+
+        assertThrows(IOException.class, () ->
+                petService.atualizarImagemPet(pet.getId(), usuario.getId(), file));
+    }
+
+
+    @Test
+    void deveExcluirPetComSucesso() {
+        when(petRepository.findById(pet.getId()))
+                .thenReturn(Optional.of(pet));
+
+        assertDoesNotThrow(() ->
+                petService.excluirPetDoUsuario(usuario.getId(), pet.getId())
+        );
+
+        verify(petRepository).delete(pet);
+    }
+
 
     @Test
     void deveLancarErroAoExcluirPetDeOutroUsuario() {
@@ -207,56 +266,6 @@ class PetServiceTest {
         );
     }
 
-    @Test
-    void deveLancarErroQuandoPetForNullAoSalvar() {
-        when(usuarioRepository.findById(usuario.getId()))
-                .thenReturn(Optional.of(usuario));
-
-        assertThrows(NullPointerException.class,
-                () -> petService.salvarPet(null, usuario.getId()));
-    }
-
-
-    @Test
-    void deveLancarErroAoAtualizarImagemDePetInexistente() throws Exception {
-        when(petRepository.findById(any()))
-                .thenReturn(Optional.empty());
-
-        assertThrows(
-                PetNotFoundException.class,
-                () -> petService.atualizarImagemPet(UUID.randomUUID(), usuario.getId(), file)
-        );
-
-        verify(uploader, never()).upload(any(), any());
-    }
-
-    @Test
-    void deveExcluirPetComSucesso() {
-        when(petRepository.findById(pet.getId()))
-                .thenReturn(Optional.of(pet));
-
-        assertDoesNotThrow(() ->
-                petService.excluirPetDoUsuario(usuario.getId(), pet.getId())
-        );
-
-        verify(petRepository).delete(pet);
-    }
-
-    @Test
-    void deveDeletarImagemAntigaAntesDeAtualizar() throws Exception {
-        pet.setImagemPublicId("old-img");
-
-        when(petRepository.findById(pet.getId()))
-                .thenReturn(Optional.of(pet));
-
-        when(file.getBytes()).thenReturn("img".getBytes());
-        when(uploader.upload(any(), any()))
-                .thenReturn(Map.of("secure_url", "x", "public_id", "y"));
-
-        petService.atualizarImagemPet(pet.getId(), usuario.getId(), file);
-
-        verify(uploader).destroy(eq("old-img"), any());
-    }
 
     @Test
     void deveRetornarMensagemCorretaQuandoUsuarioNaoEncontrado() {
@@ -268,15 +277,6 @@ class PetServiceTest {
                         () -> petService.salvarPet(pet, UUID.randomUUID()));
 
         assertEquals("Usuário não encontrado.", ex.getMessage());
-    }
-    @Test
-    void deveLancarErroQuandoUploadFalhar() throws Exception {
-        when(petRepository.findById(pet.getId())).thenReturn(Optional.of(pet));
-        when(file.getBytes()).thenReturn("abc".getBytes());
-        when(uploader.upload(any(), any())).thenThrow(new IOException("Falha ao enviar imagem"));
-
-        assertThrows(IOException.class, () ->
-                petService.atualizarImagemPet(pet.getId(), usuario.getId(), file));
     }
 
 }

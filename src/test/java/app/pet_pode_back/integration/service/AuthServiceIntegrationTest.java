@@ -16,11 +16,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-
 import java.time.LocalDateTime;
-
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -98,7 +94,6 @@ class AuthServiceIntegrationTest {
     }
 
 
-
     @Test
     void deveRegistrarComSucesso() {
         Usuario novo = new Usuario();
@@ -123,16 +118,6 @@ class AuthServiceIntegrationTest {
                 .isInstanceOf(ParametroInvalidoException.class)
                 .hasMessage("Email já cadastrado");
     }
-
-
-
-
-//  deve ser do controller  @Test
-//    void deveFalharRedefinirSenhaSemCodigoOuSenha() {
-//        assertThatThrownBy(() -> authService.redefinirSenha("", ""))
-//                .isInstanceOf(ParametroInvalidoException.class)
-//                .hasMessage("Código inválido.");
-//    }
 
 
     @Test
@@ -191,7 +176,6 @@ class AuthServiceIntegrationTest {
                 .isInstanceOf(ParametroInvalidoException.class)
                 .hasMessage("Código já foi utilizado.");
     }
-
 
 
 }

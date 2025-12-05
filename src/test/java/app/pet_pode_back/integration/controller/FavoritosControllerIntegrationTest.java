@@ -14,9 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-
 import java.util.UUID;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -80,7 +78,7 @@ public class FavoritosControllerIntegrationTest {
     void deveRetornarErro400QuandoTokenForInvalidoNoAdicionar() throws Exception {
         mockMvc.perform(put("/favoritos/" + planta.getId())
                         .header("Authorization", "Bearer token-invalido"))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.mensagem").value("Token inválido."));
     }
 
@@ -94,7 +92,6 @@ public class FavoritosControllerIntegrationTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
     }
-
 
     @Test
     void deveRemoverFavoritoComSucesso() throws Exception {
@@ -117,7 +114,7 @@ public class FavoritosControllerIntegrationTest {
     void deveRetornarErro400QuandoTokenForInvalidoNoRemover() throws Exception {
         mockMvc.perform(delete("/favoritos/" + planta.getId())
                         .header("Authorization", "Bearer 123"))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.mensagem").value("Token inválido."));
     }
 
@@ -159,7 +156,7 @@ public class FavoritosControllerIntegrationTest {
     void deveRetornarErro400QuandoTokenForInvalidoNoListar() throws Exception {
         mockMvc.perform(get("/favoritos")
                         .header("Authorization", "Bearer abc"))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.mensagem").value("Token inválido."));
     }
 

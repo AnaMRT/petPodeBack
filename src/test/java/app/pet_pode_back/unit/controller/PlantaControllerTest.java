@@ -14,7 +14,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MissingRequestHeaderException;
 
 import java.util.*;
 
@@ -84,7 +83,6 @@ class PlantaControllerTest {
     }
 
 
-
     @Test
     void deveBuscarMesmoSeUsuarioNaoTemPet() {
         UUID id = UUID.randomUUID();
@@ -102,6 +100,78 @@ class PlantaControllerTest {
 
         assertEquals(200, resposta.getStatusCode().value());
         assertTrue(resposta.getBody().isEmpty());
+    }
+
+
+    @Test
+    void deveListarPlantasVazia() {
+        when(plantaService.listarTodos()).thenReturn(Collections.emptyList());
+
+        ResponseEntity<List<Plantas>> resposta = plantasController.listar();
+
+        assertEquals(200, resposta.getStatusCodeValue());
+        assertTrue(resposta.getBody().isEmpty());
+        verify(plantaService, times(1)).listarTodos();
+    }
+
+    @Test
+    void deveBuscarPlantasComTermoParcial() {
+        UUID id = UUID.randomUUID();
+
+        Usuario usuario = new Usuario();
+        Pet pet = new Pet();
+        pet.setEspecie("Canino");
+        usuario.setPets(List.of(pet));
+
+        List<Plantas> resultado = List.of(new Plantas());
+
+        when(jwtUtil.extrairUsuarioId("token")).thenReturn(id);
+        when(usuarioService.buscarUsuarioPorId(id)).thenReturn(usuario);
+        when(plantaService.buscarPlantas("azal", pet)).thenReturn(resultado);
+
+        ResponseEntity<List<Plantas>> resposta =
+                plantasController.buscar("azal", "Bearer token");
+
+        assertEquals(200, resposta.getStatusCodeValue());
+        assertEquals(resultado, resposta.getBody());
+    }
+
+    @Test
+    void deveBuscarIgnorandoAcentuacao() {
+        UUID id = UUID.randomUUID();
+
+        Usuario usuario = new Usuario();
+        Pet pet = new Pet();
+        pet.setEspecie("Canino");
+        usuario.setPets(List.of(pet));
+
+        Plantas planta = new Plantas();
+        planta.setNomePopular("Costela-de-Adão");
+
+        when(jwtUtil.extrairUsuarioId("token")).thenReturn(id);
+        when(usuarioService.buscarUsuarioPorId(id)).thenReturn(usuario);
+        when(plantaService.buscarPlantas("adao", pet)).thenReturn(List.of(planta));
+
+        ResponseEntity<List<Plantas>> resposta =
+                plantasController.buscar("adao", "Bearer token");
+
+        assertEquals(200, resposta.getStatusCodeValue());
+        assertEquals("Costela-de-Adão", resposta.getBody().get(0).getNomePopular());
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoTokenMalFormado() {
+        UUID id = UUID.randomUUID();
+
+        when(jwtUtil.extrairUsuarioId("tokenInvalido"))
+                .thenThrow(new IllegalArgumentException("Token inválido"));
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> plantasController.buscar("rosa", "tokenInvalido")
+        );
+
+        assertEquals("Token inválido", ex.getMessage());
     }
 
     @Test
@@ -140,74 +210,6 @@ class PlantaControllerTest {
 
 
     @Test
-    void deveListarPlantasVazia() {
-        when(plantaService.listarTodos()).thenReturn(Collections.emptyList());
-
-        ResponseEntity<List<Plantas>> resposta = plantasController.listar();
-
-        assertEquals(200, resposta.getStatusCodeValue());
-        assertTrue(resposta.getBody().isEmpty());
-        verify(plantaService, times(1)).listarTodos();
-    }
-    @Test
-    void deveBuscarPlantasComTermoParcial() {
-        UUID id = UUID.randomUUID();
-
-        Usuario usuario = new Usuario();
-        Pet pet = new Pet();
-        pet.setEspecie("Canino");
-        usuario.setPets(List.of(pet));
-
-        List<Plantas> resultado = List.of(new Plantas());
-
-        when(jwtUtil.extrairUsuarioId("token")).thenReturn(id);
-        when(usuarioService.buscarUsuarioPorId(id)).thenReturn(usuario);
-        when(plantaService.buscarPlantas("azal", pet)).thenReturn(resultado);
-
-        ResponseEntity<List<Plantas>> resposta =
-                plantasController.buscar("azal", "Bearer token");
-
-        assertEquals(200, resposta.getStatusCodeValue());
-        assertEquals(resultado, resposta.getBody());
-    }
-    @Test
-    void deveBuscarIgnorandoAcentuacao() {
-        UUID id = UUID.randomUUID();
-
-        Usuario usuario = new Usuario();
-        Pet pet = new Pet();
-        pet.setEspecie("Canino");
-        usuario.setPets(List.of(pet));
-
-        Plantas planta = new Plantas();
-        planta.setNomePopular("Costela-de-Adão");
-
-        when(jwtUtil.extrairUsuarioId("token")).thenReturn(id);
-        when(usuarioService.buscarUsuarioPorId(id)).thenReturn(usuario);
-        when(plantaService.buscarPlantas("adao", pet)).thenReturn(List.of(planta));
-
-        ResponseEntity<List<Plantas>> resposta =
-                plantasController.buscar("adao", "Bearer token");
-
-        assertEquals(200, resposta.getStatusCodeValue());
-        assertEquals("Costela-de-Adão", resposta.getBody().get(0).getNomePopular());
-    }
-
-    @Test
-    void deveLancarExcecaoQuandoTokenMalFormado() {
-        UUID id = UUID.randomUUID();
-
-        when(jwtUtil.extrairUsuarioId("tokenInvalido"))
-                .thenThrow(new IllegalArgumentException("Token inválido"));
-
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
-                () -> plantasController.buscar("rosa", "tokenInvalido")
-        );
-
-        assertEquals("Token inválido", ex.getMessage());
-    }
-    @Test
     void deveRetornar404QuandoUsuarioNaoExistirAoBuscarPlantas() {
         UUID idInexistente = UUID.randomUUID();
 
@@ -223,7 +225,6 @@ class PlantaControllerTest {
         assertEquals("Usuário não encontrado", ex.getMessage());
         verify(plantaService, never()).buscarPlantas(any(), any());
     }
-
 
 
 }

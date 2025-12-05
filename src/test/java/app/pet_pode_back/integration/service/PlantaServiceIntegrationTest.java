@@ -3,19 +3,16 @@ package app.pet_pode_back.integration.service;
 import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.model.Plantas;
 import app.pet_pode_back.repository.PlantaRepository;
-import app.pet_pode_back.service.EmailService;
 import app.pet_pode_back.service.PlantaService;
-import app.pet_pode_back.security.JwtUtil;
-import com.cloudinary.Cloudinary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -112,7 +109,7 @@ class PlantaServiceIntegrationTest {
     @Test
     void naoDeveGerarDuplicacaoQuandoPlantaApareceEmMaisDeUmaRegra() {
         List<Plantas> resultado = plantaService.buscarPlantas("canino", null);
-        assertThat(resultado).hasSize(1); // planta2 só aparece uma vez
+        assertThat(resultado).hasSize(1);
     }
 
     @Test
@@ -128,7 +125,7 @@ class PlantaServiceIntegrationTest {
         pet.setEspecie("CANINO");
 
         List<Plantas> resultado = plantaService.buscarPlantas("rex", pet);
-        assertThat(resultado).contains(planta2); // toxica para caninos
+        assertThat(resultado).contains(planta2);
     }
 
     @Test
@@ -137,7 +134,6 @@ class PlantaServiceIntegrationTest {
         List<Plantas> resultado = plantaService.listarTodos();
         assertThat(resultado).isEmpty();
     }
-
 
 
     @Test
@@ -154,6 +150,7 @@ class PlantaServiceIntegrationTest {
         List<Plantas> resultado = plantaService.buscarPlantas("adao", null);
         assertThat(resultado).contains(acentuada);
     }
+
     @Test
     void deveRetornarPlantasToxicasParaCaninosQuandoTermoRelacionadoAcaes() {
         List<Plantas> resultado = plantaService.buscarPlantas("cachorro", null);
@@ -175,6 +172,7 @@ class PlantaServiceIntegrationTest {
 
         assertThat(resultado).hasSize(1).contains(planta2);
     }
+
     @Test
     void deveRetornarVazioMesmoComBDPreenchidoQuandoTermoInvalido() {
         List<Plantas> resultado = plantaService.buscarPlantas("@@@###", null);

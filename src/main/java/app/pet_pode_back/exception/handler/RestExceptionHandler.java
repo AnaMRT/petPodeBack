@@ -41,8 +41,9 @@ public class RestExceptionHandler {
             RuntimeException ex,
             HttpServletRequest request) {
 
-        return buildResponse(HttpStatus.BAD_REQUEST, "Token inválido.", request);
+        return buildResponse(HttpStatus.FORBIDDEN, "Token inválido.", request);
     }
+
     @ExceptionHandler(RegistroNaoEncontradoException.class)
     public ResponseEntity<ErroResponse> trataRegistroNaoEncontrado(
             RegistroNaoEncontradoException ex,
@@ -81,6 +82,7 @@ public class RestExceptionHandler {
 
         return buildResponse(HttpStatus.CONFLICT, mensagem, request);
     }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErroResponse> trataValidacoes(
             MethodArgumentNotValidException ex,
@@ -117,6 +119,7 @@ public class RestExceptionHandler {
                 request
         );
     }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErroResponse> trataIllegalArgument(
             IllegalArgumentException ex,

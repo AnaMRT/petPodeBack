@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -51,12 +52,15 @@ public class Usuario {
     public Set<Plantas> getFavoritos() {
         return favoritos;
     }
+
     public void addFavorito(Plantas planta) {
         this.favoritos.add(planta);
     }
+
     public void removeFavorito(Plantas planta) {
         this.favoritos.remove(planta);
     }
+
     public Usuario() {
     }
 

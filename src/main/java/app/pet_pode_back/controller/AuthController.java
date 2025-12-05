@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.Collections;
 
 
@@ -25,10 +26,12 @@ public class AuthController {
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest dto) {
         return ResponseEntity.ok(Collections.singletonMap("token", authService.login(dto)));
     }
+
     @PostMapping("/cadastro")
     public ResponseEntity<?> register(@Valid @RequestBody Usuario usuario) {
         return ResponseEntity.ok(Collections.singletonMap("token", authService.registrar(usuario)));
     }
+
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestParam("email") String email) {
         authService.solicitarRedefinicaoSenha(email);

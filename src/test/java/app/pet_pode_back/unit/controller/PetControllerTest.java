@@ -9,27 +9,21 @@ import app.pet_pode_back.exception.handler.RestExceptionHandler;
 import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.service.PetService;
 import app.pet_pode_back.security.JwtUtil;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
-
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -87,9 +81,37 @@ class PetControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(petId.toString()))
                 .andExpect(jsonPath("$.nome").value("Rex"))
-                        .andExpect(jsonPath("$.especie").value("Canino"));
+                .andExpect(jsonPath("$.especie").value("Canino"));
 
     }
+
+    @Test
+    void deveRetornarBadRequestQuandoPetNomeInvalidoNoCadastro() throws Exception {
+        Pet petInvalido = new Pet();
+        petInvalido.setNome("A");
+
+        mockMvc.perform(post("/pet")
+                        .header("Authorization", "Bearer token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(petInvalido)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem",
+                        org.hamcrest.Matchers.containsString("O nome deve ter entre 2 e 100 caracteres")));
+    }
+
+    @Test
+    void deveRetornarNotFoundQuandoUsuarioNaoExisteAoCadastrar() throws Exception {
+        when(petService.salvarPet(any(), any()))
+                .thenThrow(new RegistroNaoEncontradoException("Usuário não encontrado."));
+
+        mockMvc.perform(post("/pet")
+                        .header("Authorization", "Bearer token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(pet)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado."));
+    }
+
 
     @Test
     void deveListarPetsDoUsuario() throws Exception {
@@ -111,6 +133,29 @@ class PetControllerTest {
     }
 
     @Test
+    void deveRetornarNotFoundAoExcluirPetInexistente() throws Exception {
+        doThrow(new PetNotFoundException("Pet não encontrado."))
+                .when(petService).excluirPetDoUsuario(any(), any());
+
+        mockMvc.perform(delete("/pet/" + petId)
+                        .header("Authorization", "Bearer token"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Pet não encontrado."));
+    }
+
+    @Test
+    void deveRetornarForbiddenAoExcluirPetDeOutroUsuario() throws Exception {
+        doThrow(new SemPermissaoException("Você não tem permissão para alterar esse pet."))
+                .when(petService).excluirPetDoUsuario(any(), any());
+
+        mockMvc.perform(delete("/pet/" + petId)
+                        .header("Authorization", "Bearer token"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.mensagem").value("Você não tem permissão para alterar esse pet."));
+    }
+
+
+    @Test
     void deveEditarPetComSucesso() throws Exception {
         PetUpdateDTO dto = new PetUpdateDTO();
         dto.setNome("Novo nome");
@@ -126,9 +171,57 @@ class PetControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(petId.toString()))
                 .andExpect(jsonPath("$.nome").value("Rex"));
-        // "Rex" porque está mockado no pet retornado
     }
 
+    @Test
+    void deveRetornarBadRequestQuandoNomeInvalidoNaEdicao() throws Exception {
+
+        PetUpdateDTO dto = new PetUpdateDTO();
+        dto.setNome("A");
+
+        mockMvc.perform(put("/pet/" + petId)
+                        .header("Authorization", "Bearer token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem",
+                        org.hamcrest.Matchers.containsString("O nome deve ter entre 2 e 100 caracteres")));
+    }
+
+    @Test
+    void naoDeveEditarPetDeOutroUsuario() throws Exception {
+        PetUpdateDTO dto = new PetUpdateDTO();
+        dto.setNome("NovoNome");
+        dto.setEspecie("Felino");
+
+        doThrow(new SemPermissaoException("Você não tem permissão para alterar esse pet."))
+                .when(petService).editarPet(any(), eq(usuarioId), any());
+
+        mockMvc.perform(put("/pet/" + petId)
+                        .header("Authorization", "Bearer token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(dto)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.mensagem").value("Você não tem permissão para alterar esse pet."));
+    }
+
+
+    @Test
+    void deveRetornarNotFoundQuandoPetNaoExisteNoEditar() throws Exception {
+        when(petService.editarPet(any(), any(), any()))
+                .thenThrow(new PetNotFoundException("Pet não encontrado."));
+
+        PetUpdateDTO dto = new PetUpdateDTO();
+        dto.setNome("NovoNome");
+        dto.setEspecie("Felino");
+
+        mockMvc.perform(put("/pet/" + petId)
+                        .header("Authorization", "Bearer token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(dto)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Pet não encontrado."));
+    }
 
     @Test
     void deveAtualizarImagemComSucesso() throws Exception {
@@ -149,62 +242,6 @@ class PetControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.imagemUrl").value("http://imagem.com/pet.jpg"));
     }
-
-    @Test
-    void deveRetornarNotFoundQuandoPetNaoExisteNoEditar() throws Exception {
-        when(petService.editarPet(any(), any(), any()))
-                .thenThrow(new PetNotFoundException("Pet não encontrado."));
-
-        PetUpdateDTO dto = new PetUpdateDTO();
-        dto.setNome("NovoNome");
-        dto.setEspecie("Felino"); // obrigatório agora
-
-        mockMvc.perform(put("/pet/" + petId)
-                        .header("Authorization", "Bearer token")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(dto)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.mensagem").value("Pet não encontrado."));
-    }
-
-    @Test
-    void deveRetornarNotFoundAoExcluirPetInexistente() throws Exception {
-        doThrow(new PetNotFoundException("Pet não encontrado."))
-                .when(petService).excluirPetDoUsuario(any(), any());
-
-        mockMvc.perform(delete("/pet/" + petId)
-                        .header("Authorization", "Bearer token"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.mensagem").value("Pet não encontrado."));
-    }
-
-
-
-    @Test
-    void deveRetornarForbiddenAoExcluirPetDeOutroUsuario() throws Exception {
-        doThrow(new SemPermissaoException("Você não tem permissão para alterar esse pet."))
-                .when(petService).excluirPetDoUsuario(any(), any());
-
-        mockMvc.perform(delete("/pet/" + petId)
-                        .header("Authorization", "Bearer token"))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.mensagem").value("Você não tem permissão para alterar esse pet."));
-    }
-
-
-    @Test
-    void deveRetornarNotFoundQuandoUsuarioNaoExisteAoCadastrar() throws Exception {
-        when(petService.salvarPet(any(), any()))
-                .thenThrow(new RegistroNaoEncontradoException("Usuário não encontrado."));
-
-        mockMvc.perform(post("/pet")
-                        .header("Authorization", "Bearer token")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(pet)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado."));
-    }
-
 
 
     @Test
@@ -229,7 +266,10 @@ class PetControllerTest {
 
         mockMvc.perform(multipart("/pet/" + petId + "/imagem")
                         .file(file)
-                        .with(req -> { req.setMethod("PUT"); return req; })
+                        .with(req -> {
+                            req.setMethod("PUT");
+                            return req;
+                        })
                         .header("Authorization", "Bearer token"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.mensagem").value("Pet não encontrado."));
@@ -246,56 +286,14 @@ class PetControllerTest {
 
         mockMvc.perform(multipart("/pet/" + petId + "/imagem")
                         .file(file)
-                        .with(req -> { req.setMethod("PUT"); return req; })
+                        .with(req -> {
+                            req.setMethod("PUT");
+                            return req;
+                        })
                         .header("Authorization", "Bearer token"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.mensagem").value("Erro inesperado. Tente novamente."));
     }
 
-    @Test
-    void deveRetornarBadRequestQuandoPetNomeInvalidoNoCadastro() throws Exception {
-        Pet petInvalido = new Pet();
-        petInvalido.setNome("A"); // inválido
-
-        mockMvc.perform(post("/pet")
-                        .header("Authorization", "Bearer token")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(petInvalido)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.mensagem",
-                        org.hamcrest.Matchers.containsString("O nome deve ter entre 2 e 100 caracteres")));
-    }
-
-    @Test
-    void deveRetornarBadRequestQuandoNomeInvalidoNaEdicao() throws Exception {
-
-        PetUpdateDTO dto = new PetUpdateDTO();
-        dto.setNome("A"); // Nome muito curto (inválido)
-
-        mockMvc.perform(put("/pet/" + petId)
-                        .header("Authorization", "Bearer token")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(dto)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.mensagem",
-                        org.hamcrest.Matchers.containsString("O nome deve ter entre 2 e 100 caracteres")));
-    }
-
-    @Test
-    void naoDeveEditarPetDeOutroUsuario() throws Exception {
-        PetUpdateDTO dto = new PetUpdateDTO();
-        dto.setNome("NovoNome");
-        dto.setEspecie("Felino"); // obrigatório agora
-
-        doThrow(new SemPermissaoException("Você não tem permissão para alterar esse pet."))
-                .when(petService).editarPet(any(), eq(usuarioId), any());
-
-        mockMvc.perform(put("/pet/" + petId)
-                        .header("Authorization", "Bearer token")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(dto)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.mensagem").value("Você não tem permissão para alterar esse pet."));
-    }
 
 }

@@ -39,7 +39,15 @@ class PlantaServiceTest {
         planta2.setNomeCientifico("Lilium");
     }
 
+    @Test
+    void deveListarTodasAsPlantas() {
+        when(plantaRepository.findAll()).thenReturn(List.of(planta1, planta2));
 
+        List<Plantas> resultado = plantaService.listarTodos();
+
+        assertThat(resultado).hasSize(2);
+        verify(plantaRepository, times(1)).findAll();
+    }
 
     @Test
     void deveIgnorarEspacosAntesEDepoisDoTermo() {
@@ -53,12 +61,13 @@ class PlantaServiceTest {
 
     @Test
     void deveEncontrarPorNomeCientifico() {
-        when(plantaRepository.findAll()).thenReturn(List.of(planta1)); // Monstera deliciosa
+        when(plantaRepository.findAll()).thenReturn(List.of(planta1));
 
         List<Plantas> resultado = plantaService.buscarPlantas("deliciosa", null);
 
         assertThat(resultado).contains(planta1);
     }
+
     @Test
     void deveRetornarListaVaziaQuandoTermoIndicaEspecieMasNaoHaPlantasToxicas() {
         when(plantaRepository.findAll()).thenReturn(List.of());
@@ -68,18 +77,6 @@ class PlantaServiceTest {
 
         assertThat(resultado).isEmpty();
     }
-
-
-    @Test
-    void deveListarTodasAsPlantas() {
-        when(plantaRepository.findAll()).thenReturn(List.of(planta1, planta2));
-
-        List<Plantas> resultado = plantaService.listarTodos();
-
-        assertThat(resultado).hasSize(2);
-        verify(plantaRepository, times(1)).findAll();
-    }
-
 
 
     @Test
@@ -158,7 +155,6 @@ class PlantaServiceTest {
     }
 
 
-
     @Test
     void naoDeveGerarDuplicacaoComPetERegrasDeToxicidade() {
         when(plantaRepository.findAll()).thenReturn(List.of(planta1));
@@ -170,8 +166,6 @@ class PlantaServiceTest {
     }
 
 
-
-
     @Test
     void deveRetornarPlantasToxicasQuandoTermoForCanino() {
         when(plantaRepository.findAll()).thenReturn(List.of());
@@ -181,6 +175,7 @@ class PlantaServiceTest {
 
         assertThat(resultado).containsExactly(planta1);
     }
+
     @Test
     void deveRetornarPlantasToxicasQuandoTermoForFelino() {
         when(plantaRepository.findAll()).thenReturn(List.of());

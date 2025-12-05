@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,6 +16,7 @@ public class EmailService {
     private String sendgridUrl;
     @Value("${sendgrid.from.email}")
     private String fromEmail;
+
     public void enviarEmail(String para, String assunto, String texto) {
 
         Map<String, Object> body = new HashMap<>();

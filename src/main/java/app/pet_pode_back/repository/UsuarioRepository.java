@@ -3,6 +3,7 @@ package app.pet_pode_back.repository;
 import app.pet_pode_back.model.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
 import java.util.Optional;
 import java.util.UUID;
 

@@ -11,9 +11,12 @@ import com.cloudinary.Cloudinary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 import java.util.*;
+
 import com.cloudinary.utils.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 
 @Service
@@ -30,6 +33,7 @@ public class UsuarioService {
     public List<Usuario> listarTodos() {
         return usuarioRepository.findAll();
     }
+
     public Usuario editarUsuario(UUID usuarioId, UsuarioUpdateDTO dto) {
         Usuario usuario = buscarUsuarioPorId(usuarioId);
 
@@ -95,7 +99,6 @@ public class UsuarioService {
 
         return imagemUrl;
     }
-
 
 
     private void excluirImagemDoCloud(UUID usuarioId, Usuario usuario) {

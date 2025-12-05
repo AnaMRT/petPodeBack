@@ -19,12 +19,15 @@ public class ResetPasswordDTO {
     public String getCodigo() {
         return codigo;
     }
+
     public void setCodigo(String codigo) {
         this.codigo = codigo;
     }
+
     public String getNovaSenha() {
         return novaSenha;
     }
+
     public void setNovaSenha(String novaSenha) {
         this.novaSenha = novaSenha;
     }

@@ -14,9 +14,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
 import java.util.*;
-
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -97,6 +95,17 @@ class FavoritosControllerTest {
     }
 
     @Test
+    void deveRetornarErro400QuandoTokenForInvalidoNoRemover() throws Exception {
+        when(jwtUtil.extrairUsuarioId("token-invalido"))
+                .thenThrow(new IllegalArgumentException("Token inválido."));
+
+        mockMvc.perform(delete("/favoritos/{id}", plantaId)
+                        .header("Authorization", "Bearer token-invalido"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value("Token inválido."));
+    }
+
+    @Test
     void deveRetornar404QuandoUsuarioNaoExisteNoRemover() throws Exception {
         when(jwtUtil.extrairUsuarioId("tok123")).thenReturn(usuarioId);
         doThrow(new RegistroNaoEncontradoException("Usuário não encontrado"))
@@ -141,17 +150,6 @@ class FavoritosControllerTest {
         mockMvc.perform(get("/favoritos")
                         .header("Authorization", "Bearer tok3"))
                 .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void deveRetornarErro400QuandoTokenForInvalidoNoRemover() throws Exception {
-        when(jwtUtil.extrairUsuarioId("token-invalido"))
-                .thenThrow(new IllegalArgumentException("Token inválido."));
-
-        mockMvc.perform(delete("/favoritos/{id}", plantaId)
-                        .header("Authorization", "Bearer token-invalido"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.mensagem").value("Token inválido."));
     }
 
     @Test

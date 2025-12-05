@@ -4,7 +4,6 @@ import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.UsuarioRepository;
 import app.pet_pode_back.model.PasswordResetToken;
 import app.pet_pode_back.repository.PasswordResetTokenRepository;
-
 import app.pet_pode_back.service.EmailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -82,6 +81,22 @@ public class AuthControllerIntegrationTest {
                         .content(json))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").exists());
+    }
+
+    @Test
+    void deveFalharAoRegistrarComCamposInvalidos() throws Exception {
+        String json = """
+                {
+                  "nome": "",
+                  "email": "",
+                  "senha": ""
+                }
+                """;
+
+        mockMvc.perform(post("/auth/cadastro")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
     }
 
 
@@ -194,16 +209,6 @@ public class AuthControllerIntegrationTest {
     }
 
     @Test
-    void deveFalharAoSolicitarRedefinicaoQuandoEmailNaoExiste() throws Exception {
-
-        mockMvc.perform(post("/auth/forgot-password")
-                        .param("email", "naoexiste@test.com"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
-    }
-
-
-    @Test
     void deveRedefinirSenhaComSucesso() throws Exception {
 
         Usuario u = new Usuario();
@@ -231,6 +236,14 @@ public class AuthControllerIntegrationTest {
         assertTrue(passwordEncoder.matches("nova123", atualizado.getSenha()));
     }
 
+    @Test
+    void deveFalharAoSolicitarRedefinicaoQuandoEmailNaoExiste() throws Exception {
+
+        mockMvc.perform(post("/auth/forgot-password")
+                        .param("email", "naoexiste@test.com"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
+    }
 
     @Test
     void deveFalharAoRedefinirSenhaComCodigoInvalido() throws Exception {
@@ -316,24 +329,6 @@ public class AuthControllerIntegrationTest {
                         .content(json))
                 .andExpect(status().isBadRequest());
     }
-
-
-    @Test
-    void deveFalharAoRegistrarComCamposInvalidos() throws Exception {
-        String json = """
-            {
-              "nome": "",
-              "email": "",
-              "senha": ""
-            }
-            """;
-
-        mockMvc.perform(post("/auth/cadastro")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest());
-    }
-
 
 
 }

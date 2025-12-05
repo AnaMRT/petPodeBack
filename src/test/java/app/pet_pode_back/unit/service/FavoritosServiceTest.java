@@ -48,7 +48,6 @@ class FavoritosServiceTest {
     }
 
 
-
     @Test
     void deveAdicionarFavoritoComSucesso() {
         when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.of(usuario));
@@ -59,6 +58,17 @@ class FavoritosServiceTest {
 
         assertTrue(usuario.getFavoritos().contains(planta));
         verify(usuarioRepository).save(usuario);
+    }
+
+    @Test
+    void deveAdicionarMesmaPlantaApenasUmaVez() {
+        usuario.getFavoritos().add(planta);
+        when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.of(usuario));
+        when(plantaRepository.findById(plantaId)).thenReturn(Optional.of(planta));
+
+        favoritosService.adicionarFavorito(usuarioId, plantaId);
+
+        assertEquals(1, usuario.getFavoritos().size());
     }
 
     @Test
@@ -92,6 +102,14 @@ class FavoritosServiceTest {
     }
 
     @Test
+    void deveRemoverPlantaQueNaoEstaNosFavoritosSemErro() {
+        when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.of(usuario));
+        when(plantaRepository.findById(plantaId)).thenReturn(Optional.of(planta));
+
+        assertDoesNotThrow(() -> favoritosService.removerFavorito(usuarioId, plantaId));
+    }
+
+    @Test
     void deveLancarErroQuandoUsuarioNaoExisteAoRemoverFavorito() {
         when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.empty());
 
@@ -107,7 +125,6 @@ class FavoritosServiceTest {
         assertThrows(RegistroNaoEncontradoException.class,
                 () -> favoritosService.removerFavorito(usuarioId, plantaId));
     }
-
 
 
     @Test
@@ -129,23 +146,7 @@ class FavoritosServiceTest {
                 () -> favoritosService.listarFavoritos(usuarioId));
     }
 
-    @Test
-    void deveAdicionarMesmaPlantaApenasUmaVez() {
-        usuario.getFavoritos().add(planta);
-        when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.of(usuario));
-        when(plantaRepository.findById(plantaId)).thenReturn(Optional.of(planta));
 
-        favoritosService.adicionarFavorito(usuarioId, plantaId);
-
-        assertEquals(1, usuario.getFavoritos().size());
-    }
-    @Test
-    void deveRemoverPlantaQueNaoEstaNosFavoritosSemErro() {
-        when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.of(usuario));
-        when(plantaRepository.findById(plantaId)).thenReturn(Optional.of(planta));
-
-        assertDoesNotThrow(() -> favoritosService.removerFavorito(usuarioId, plantaId));
-    }
     @Test
     void deveListarFavoritosComMaisDeUmFavorito() {
         Plantas planta2 = new Plantas();

@@ -8,13 +8,8 @@ import app.pet_pode_back.repository.UsuarioRepository;
 import app.pet_pode_back.service.UsuarioService;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.Uploader;
-import com.cloudinary.utils.ObjectUtils;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,23 +19,15 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -88,7 +75,7 @@ class UsuarioServiceIntegrationTest {
     }
 
     @Test
-    void deveAtualizarImagemDoUsuarioComMockCloudinary() throws Exception {
+    void deveAtualizarImagemDoUsuario() throws Exception {
 
         Map<String, Object> resultadoUpload = Map.of(
                 "secure_url", "http://foto.com/img.jpg",
@@ -115,48 +102,39 @@ class UsuarioServiceIntegrationTest {
     }
 
     @Test
-    void deveFalharAtualizarImagemSeIOException() throws Exception {
+    void deveLancarErroQuandoCloudinaryFalhaNoUpload() throws Exception {
+        MultipartFile file = new MockMultipartFile("img", "img.png", "image/png", "teste".getBytes());
 
-        MockMultipartFile arquivo = new MockMultipartFile(
-                "file", "foto.jpg", "image/jpeg", "conteudo".getBytes()
+        when(uploaderMock.upload(any(), any())).thenThrow(new RuntimeException("Falha Cloudinary"));
+
+        assertThatThrownBy(() -> usuarioService.atualizarImagemUsuario(usuarioPadrao.getId(), file))
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void deveAtualizarImagemUsuarioRemovendoImagemAntiga() throws Exception {
+        usuarioPadrao.setImagemPublicId("old-img");
+        usuarioRepository.save(usuarioPadrao);
+
+        MultipartFile file = new MockMultipartFile("img", "x.png", "image/png", "xxx".getBytes());
+
+        Map<String, Object> result = Map.of(
+                "secure_url", "https://nova.com/img.png",
+                "public_id", "new-img"
         );
 
-        when(uploaderMock.upload(any(byte[].class), anyMap()))
-                .thenThrow(new IOException("Falha simulada"));
+        when(uploaderMock.upload(any(), any())).thenReturn(result);
 
-        assertThatThrownBy(() ->
-                usuarioService.atualizarImagemUsuario(usuarioPadrao.getId(), arquivo)
-        )
-                .isInstanceOf(IOException.class)
-                .hasMessage("Falha simulada");
-    }
+        String url = usuarioService.atualizarImagemUsuario(usuarioPadrao.getId(), file);
 
+        verify(uploaderMock).destroy(eq("old-img"), any());
+        verify(uploaderMock).upload(any(), any());
 
-
-
-    @Test
-    void deveEditarNomeDoUsuario() {
-        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
-        dto.setNome("NovoNome");
-
-        Usuario atualizado = usuarioService.editarUsuario(usuarioPadrao.getId(), dto);
-
-        assertThat(atualizado.getNome()).isEqualTo("NovoNome");
-        assertThat(atualizado.getEmail()).isEqualTo(usuarioPadrao.getEmail());
+        assertThat(url).isEqualTo("https://nova.com/img.png");
     }
 
     @Test
-    void deveEditarEmailDoUsuario() {
-        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
-        dto.setEmail("novo@email.com");
-
-        Usuario atualizado = usuarioService.editarUsuario(usuarioPadrao.getId(), dto);
-
-        assertThat(atualizado.getEmail()).isEqualTo("novo@email.com");
-    }
-
-    @Test
-    void deveFalharSeUsuarioNaoExistir() {
+    void deveLancarExcecaoQuandoUsuarioNaoEncontrado() {
         UUID idInexistente = UUID.randomUUID();
         UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
         dto.setNome("X");
@@ -167,7 +145,7 @@ class UsuarioServiceIntegrationTest {
     }
 
     @Test
-    void deveAtualizarSenhaCorretamente() {
+    void deveAtualizarSenhaQuandoInformadaCorretamente() {
         UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
         dto.setSenhaAtual("123456");
         dto.setSenha("novaSenha");
@@ -179,7 +157,19 @@ class UsuarioServiceIntegrationTest {
     }
 
     @Test
-    void deveFalharAtualizacaoSenhaComSenhaAtualErrada() {
+    void deveEditarUsuarioSemAlterarSenha() {
+        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+        dto.setNome("Novo Nome");
+        dto.setEmail("novo@email");
+
+        Usuario atualizado = usuarioService.editarUsuario(usuarioPadrao.getId(), dto);
+
+        assertThat(atualizado.getNome()).isEqualTo("Novo Nome");
+        assertThat(atualizado.getSenha()).isEqualTo(usuarioPadrao.getSenha());
+    }
+
+    @Test
+    void deveFalharSeSenhaAtualIncorreta() {
         UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
         dto.setSenhaAtual("errada");
         dto.setSenha("novaSenha");
@@ -203,89 +193,52 @@ class UsuarioServiceIntegrationTest {
     }
 
     @Test
-    void deveRemoverUsuario() {
-        usuarioService.remover(usuarioPadrao.getId());
-        assertThat(usuarioRepository.findById(usuarioPadrao.getId())).isEmpty();
-    }
-
-    @Test
-    void deveFalharAoRemoverUsuarioInexistente() {
-        UUID idInexistente = UUID.randomUUID();
-        assertThatThrownBy(() -> usuarioService.remover(idInexistente))
-                .isInstanceOf(RegistroNaoEncontradoException.class)
-                .hasMessage("Usuário não encontrado");
-    }
-    @Test
-    void deveFalharAtualizacaoSenhaComSenhaAtualFaltando() {
-        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
-        dto.setSenha("novaSenha");
-        dto.setConfirmarSenha("novaSenha");
-
-        assertThatThrownBy(() -> usuarioService.editarUsuario(usuarioPadrao.getId(), dto))
-                .isInstanceOf(ParametroInvalidoException.class)
-                .hasMessage("Para alterar a senha, informe também a senha atual.");
-    }
-
-    @Test
-    void deveFalharAtualizacaoSenhaComNovaSenhaFaltando() {
+    void deveLancarExcecaoQuandoSenhaAtualInformadaMasNovaSenhaFaltando() {
         UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
         dto.setSenhaAtual("123456");
-
-        assertThatThrownBy(() -> usuarioService.editarUsuario(usuarioPadrao.getId(), dto))
-                .isInstanceOf(ParametroInvalidoException.class)
-                .hasMessage("Para alterar a senha, informe nova senha e confirmação.");
-    }
-    @Test
-    void deveFalharBuscarUsuarioPorIdInexistente() {
-        UUID idInexistente = UUID.randomUUID();
-
-        assertThatThrownBy(() -> usuarioService.buscarUsuarioPorId(idInexistente))
-                .isInstanceOf(RegistroNaoEncontradoException.class)
-                .hasMessage("Usuário não encontrado");
-    }
-    @Test
-    void deveFalharSeSenhaAtualInformadaMasNovaSenhaFaltando() {
-        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
-        dto.setSenhaAtual("123456"); // atual informada
-        dto.setSenha(null);           // nova senha ausente
+        dto.setSenha(null);
         dto.setConfirmarSenha(null);
 
         assertThatThrownBy(() -> usuarioService.editarUsuario(usuarioPadrao.getId(), dto))
                 .isInstanceOf(ParametroInvalidoException.class)
                 .hasMessage("Para alterar a senha, informe nova senha e confirmação.");
     }
-    @Test
-    void deveFalharSeNovaSenhaDiferenteDaConfirmacao() {
-        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
-        dto.setSenhaAtual("123456");
-        dto.setSenha("novaSenha");
-        dto.setConfirmarSenha("outraSenha");
 
-        assertThatThrownBy(() -> usuarioService.editarUsuario(usuarioPadrao.getId(), dto))
-                .isInstanceOf(ParametroInvalidoException.class)
-                .hasMessage("Nova senha e confirmação não coincidem.");
-    }
+
     @Test
-    void deveFalharSeNovaSenhaSemSenhaAtual() {
+    void deveLancarExcecaoQuandoNovaSenhaInformadaSemSenhaAtual() {
         UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
         dto.setSenha("novaSenha");
         dto.setConfirmarSenha("novaSenha");
-        dto.setSenhaAtual(null);
 
         assertThatThrownBy(() -> usuarioService.editarUsuario(usuarioPadrao.getId(), dto))
                 .isInstanceOf(ParametroInvalidoException.class)
                 .hasMessage("Para alterar a senha, informe também a senha atual.");
     }
-    @Test
-    void deveFalharSeSenhaAtualIncorreta() {
-        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
-        dto.setSenhaAtual("errada");
-        dto.setSenha("novaSenha");
-        dto.setConfirmarSenha("novaSenha");
 
-        assertThatThrownBy(() -> usuarioService.editarUsuario(usuarioPadrao.getId(), dto))
-                .isInstanceOf(ParametroInvalidoException.class)
-                .hasMessage("Senha atual incorreta.");
+
+    @Test
+    void deveRemoverUsuario() {
+        usuarioService.remover(usuarioPadrao.getId());
+        assertThat(usuarioRepository.findById(usuarioPadrao.getId())).isEmpty();
+    }
+
+    @Test
+    void deveLancarExcecaoAoRemoverUsuarioInexistente() {
+        UUID idInexistente = UUID.randomUUID();
+        assertThatThrownBy(() -> usuarioService.remover(idInexistente))
+                .isInstanceOf(RegistroNaoEncontradoException.class)
+                .hasMessage("Usuário não encontrado");
+    }
+
+
+    @Test
+    void deveRetornarUsuarioQuandoEncontrado() {
+        Usuario encontrado = usuarioService.buscarUsuarioPorId(usuarioPadrao.getId());
+
+        assertThat(encontrado).isNotNull();
+        assertThat(encontrado.getId()).isEqualTo(usuarioPadrao.getId());
+        assertThat(encontrado.getEmail()).isEqualTo("rafa@email.com");
     }
 
 

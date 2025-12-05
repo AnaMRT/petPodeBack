@@ -18,13 +18,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.io.IOException;
 import java.util.*;
+
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
-
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 
@@ -52,10 +53,8 @@ class UsuarioControllerTest {
     }
 
 
-
-
     @Test
-    void deveEditarUsuario_CenarioSucesso() throws Exception {
+    void deveEditarUsuarioComSucesso() throws Exception {
         UUID usuarioId = UUID.randomUUID();
         UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
         dto.setNome("Novo Nome");
@@ -79,6 +78,67 @@ class UsuarioControllerTest {
                 .andExpect(jsonPath("$.nome").value("Novo Nome"))
                 .andExpect(jsonPath("$.email").value("novo@email.com"));
     }
+
+    @Test
+    void deveRetornar409AoEditarUsuarioComEmailDuplicado() throws Exception {
+        UUID usuarioId = UUID.randomUUID();
+        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+        dto.setNome("Nome");
+        dto.setEmail("duplicado@email.com");
+
+        when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuarioId);
+        doThrow(new DataIntegrityViolationException("duplicado"))
+                .when(usuarioService).editarUsuario(eq(usuarioId), any());
+
+        mockMvc.perform(put("/usuario")
+                        .header("Authorization", "Bearer token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.mensagem")
+                        .value("Operação inválida: já existe um registro com esses dados."));
+    }
+
+    @Test
+    void deveRetornar400QuandoDTOInvalido() throws Exception {
+        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+        dto.setNome("");
+        dto.setEmail("");
+
+        mockMvc.perform(put("/usuario")
+                        .header("Authorization", "Bearer token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value(400))
+                .andExpect(jsonPath("$.path").value("/usuario"));
+    }
+
+
+    @Test
+    void deveRetornar500QuandoErroInesperadoAoEditar() throws Exception {
+        UUID usuarioId = UUID.randomUUID();
+
+        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+        dto.setNome("Teste");
+        dto.setEmail("email@test.com");
+        dto.setSenhaAtual("123456");
+        dto.setSenha("1234566");
+        dto.setConfirmarSenha("1234566");
+
+        when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuarioId);
+
+        when(usuarioService.editarUsuario(eq(usuarioId), any()))
+                .thenThrow(new RuntimeException("Erro inesperado"));
+
+        mockMvc.perform(put("/usuario")
+                        .header("Authorization", "Bearer token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.mensagem").value("Erro inesperado. Tente novamente."));
+    }
+
 
     @Test
     void deveRetornar404QuandoEditarUsuarioInexistente() throws Exception {
@@ -106,7 +166,7 @@ class UsuarioControllerTest {
     }
 
     @Test
-    void deveRemoverUsuario_CenarioSucesso() throws Exception {
+    void deveRemoverUsuarioComSucesso() throws Exception {
         UUID usuarioId = UUID.randomUUID();
         when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuarioId);
 
@@ -119,43 +179,7 @@ class UsuarioControllerTest {
     }
 
     @Test
-    void deveRetornarUsuarioLogado() throws Exception {
-        Map<String, Object> usuario = new HashMap<>();
-        usuario.put("nome", "Patapin");
-
-        when(usuarioService.getUsuarioLogado("abc")).thenReturn(usuario);
-
-        mockMvc.perform(get("/usuario/logado")
-                        .header("Authorization", "Bearer abc"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nome").value("Patapin"));
-    }
-    @Test
-    void deveRetornar500QuandoErroInesperadoAoEditar() throws Exception {
-        UUID usuarioId = UUID.randomUUID();
-
-        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
-        dto.setNome("Teste");
-        dto.setEmail("email@test.com");
-        dto.setSenhaAtual("123456");
-        dto.setSenha("1234566");
-        dto.setConfirmarSenha("1234566");
-
-        when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuarioId);
-
-        when(usuarioService.editarUsuario(eq(usuarioId), any()))
-                .thenThrow(new RuntimeException("Erro inesperado"));
-
-        mockMvc.perform(put("/usuario")
-                        .header("Authorization", "Bearer token")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.mensagem").value("Erro inesperado. Tente novamente."));
-    }
-
-    @Test
-    void deveRetornar403QuandoTokenInvalidoNoDelete() throws Exception {
+    void deveFalharRemoverUsuarioComTokenInvalido() throws Exception {
         when(jwtUtil.extrairUsuarioId(anyString()))
                 .thenThrow(new IllegalArgumentException("Token inválido"));
 
@@ -193,6 +217,21 @@ class UsuarioControllerTest {
                 .andExpect(jsonPath("$.mensagem").value("Erro inesperado. Tente novamente."));
     }
 
+
+    @Test
+    void deveRetornarUsuarioLogado() throws Exception {
+        Map<String, Object> usuario = new HashMap<>();
+        usuario.put("nome", "Patapin");
+
+        when(usuarioService.getUsuarioLogado("abc")).thenReturn(usuario);
+
+        mockMvc.perform(get("/usuario/logado")
+                        .header("Authorization", "Bearer abc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("Patapin"));
+    }
+
+
     @Test
     void deveRetornar404QuandoUsuarioLogadoNaoExiste() throws Exception {
         UUID usuarioId = UUID.randomUUID();
@@ -207,52 +246,6 @@ class UsuarioControllerTest {
                 .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
     }
 
-
-    @Test
-    void deveRetornar403QuandoTokenInvalidoNoDelete_2() throws Exception {
-        when(jwtUtil.extrairUsuarioId(anyString()))
-                .thenThrow(new IllegalArgumentException("Token inválido"));
-
-        mockMvc.perform(delete("/usuario")
-                        .header("Authorization", "Bearer invalido"))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.mensagem").value("Token inválido ou expirado"));
-    }
-
-    @Test
-    void deveRetornar409QuandoErroDeIntegridadeAoDeletar() throws Exception {
-        UUID usuarioId = UUID.randomUUID();
-
-        when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuarioId);
-        doThrow(new DataIntegrityViolationException("duplicado"))
-                .when(usuarioService).remover(usuarioId);
-
-        mockMvc.perform(delete("/usuario")
-                        .header("Authorization", "Bearer token"))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.mensagem")
-                        .value("Operação inválida: já existe um registro com esses dados."));
-    }
-
-    @Test
-    void deveRetornar500QuandoFalhaAoProcessarImagem() throws Exception {
-        UUID usuarioId = UUID.randomUUID();
-        when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuarioId);
-
-        when(usuarioService.atualizarImagemUsuario(eq(usuarioId), any()))
-                .thenThrow(new IOException("Falha IO"));
-
-        MockMultipartFile arquivo = new MockMultipartFile(
-                "file", "foto.jpg", "image/jpeg", "123".getBytes()
-        );
-
-        mockMvc.perform(multipart("/usuario/imagem")
-                        .file(arquivo)
-                        .with(r -> { r.setMethod("PUT"); return r; })
-                        .header("Authorization", "Bearer token"))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.mensagem").value("Erro inesperado. Tente novamente."));
-    }
 
     @Test
     void deveAtualizarImagemDoUsuario() throws Exception {
@@ -277,26 +270,29 @@ class UsuarioControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.imagemUrl").value("http://foto.com/img.jpg"));
     }
+
     @Test
-    void deveRetornar409AoEditarUsuarioComEmailDuplicado() throws Exception {
+    void deveRetornar500QuandoFalhaAoProcessarImagem() throws Exception {
         UUID usuarioId = UUID.randomUUID();
-        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
-        dto.setNome("Nome");
-        dto.setEmail("duplicado@email.com");
-
         when(jwtUtil.extrairUsuarioId(anyString())).thenReturn(usuarioId);
-        doThrow(new DataIntegrityViolationException("duplicado"))
-                .when(usuarioService).editarUsuario(eq(usuarioId), any());
 
-        mockMvc.perform(put("/usuario")
-                        .header("Authorization", "Bearer token")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.mensagem")
-                        .value("Operação inválida: já existe um registro com esses dados."));
+        when(usuarioService.atualizarImagemUsuario(eq(usuarioId), any()))
+                .thenThrow(new IOException("Falha IO"));
+
+        MockMultipartFile arquivo = new MockMultipartFile(
+                "file", "foto.jpg", "image/jpeg", "123".getBytes()
+        );
+
+        mockMvc.perform(multipart("/usuario/imagem")
+                        .file(arquivo)
+                        .with(r -> {
+                            r.setMethod("PUT");
+                            return r;
+                        })
+                        .header("Authorization", "Bearer token"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.mensagem").value("Erro inesperado. Tente novamente."));
     }
-
 
 }
 

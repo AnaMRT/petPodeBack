@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.List;
@@ -32,6 +33,7 @@ public class PetController {
         UUID usuarioId = jwtUtil.extrairUsuarioId(token.replace("Bearer ", ""));
         return ResponseEntity.ok(petService.salvarPet(pet, usuarioId));
     }
+
     @GetMapping
     public ResponseEntity<List<Pet>> listarPets(
             @RequestHeader("Authorization") String token) {
@@ -39,6 +41,7 @@ public class PetController {
         UUID usuarioId = jwtUtil.extrairUsuarioId(token.replace("Bearer ", ""));
         return ResponseEntity.ok(petService.listarPetsPorUsuario(usuarioId));
     }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(
             @PathVariable UUID id,
@@ -48,6 +51,7 @@ public class PetController {
         petService.excluirPetDoUsuario(usuarioId, id);
         return ResponseEntity.noContent().build();
     }
+
     @PutMapping("/{id}")
     public ResponseEntity<Pet> editar(
             @PathVariable UUID id,
@@ -57,6 +61,7 @@ public class PetController {
         UUID usuarioId = jwtUtil.extrairUsuarioId(token.replace("Bearer ", ""));
         return ResponseEntity.ok(petService.editarPet(id, usuarioId, dto));
     }
+
     @PutMapping("/{id}/imagem")
     public ResponseEntity<?> atualizarImagem(
             @PathVariable UUID id,

@@ -8,19 +8,18 @@ import app.pet_pode_back.util.StringUtils;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.*;
 
 @Service
 public class PlantaService {
     @Autowired
     private PlantaRepository plantaRepository;
-    public Plantas cadastrar(@Valid Plantas plantas) {
-        plantaRepository.save(plantas);
-        return plantas;
-    }
+
     public List<Plantas> listarTodos() {
         return plantaRepository.findAll();
     }
+
     public List<Plantas> buscarPlantas(String termo, Pet pet) {
         String termoNormalizado = StringUtils.normalize(termo.trim());
         Set<Plantas> resultado = new HashSet<>();
@@ -55,21 +54,20 @@ public class PlantaService {
         return StringUtils.normalize(planta.getNomePopular()).contains(termoNormalizado)
                 || StringUtils.normalize(planta.getNomeCientifico()).contains(termoNormalizado);
     }
+
     private boolean matchPet(String termoNormalizado, Pet pet) {
         return termoNormalizado.contains(StringUtils.normalize(pet.getNome()));
     }
+
     private boolean isTermoCanino(String termo) {
         return termo.contains("canin") ||
                 termo.contains("cao") ||
                 termo.contains("cachorr");
     }
+
     private boolean isTermoFelino(String termo) {
         return termo.contains("felin") ||
                 termo.contains("gat");
     }
-    public void remover(UUID id) {
-        Plantas planta = plantaRepository.findById(id)
-                .orElseThrow(() -> new RegistroNaoEncontradoException("Planta não encontrada"));
-        plantaRepository.delete(planta);
-    }
+
 }

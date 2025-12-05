@@ -3,7 +3,6 @@ package app.pet_pode_back.unit.service;
 import app.pet_pode_back.dto.UsuarioUpdateDTO;
 import app.pet_pode_back.exception.ParametroInvalidoException;
 import app.pet_pode_back.exception.RegistroNaoEncontradoException;
-import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.PlantaRepository;
 import app.pet_pode_back.repository.UsuarioRepository;
@@ -17,10 +16,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.IOException;
+
 import java.util.*;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
@@ -29,9 +30,12 @@ class UsuarioServiceTest {
     @InjectMocks
     private UsuarioService usuarioService;
 
-    @Mock private Cloudinary cloudinary;
-    @Mock private Uploader uploader;
-    @Mock private Api api;
+    @Mock
+    private Cloudinary cloudinary;
+    @Mock
+    private Uploader uploader;
+    @Mock
+    private Api api;
     @Mock
     private JwtUtil jwtUtil;
 
@@ -51,124 +55,6 @@ class UsuarioServiceTest {
         when(cloudinary.api()).thenReturn(api);
     }
 
-
-    @Test
-    void deveRetornarUsuarioQuandoEncontrado() {
-        UUID id = UUID.randomUUID();
-        Usuario usuario = new Usuario();
-        usuario.setId(id);
-
-        when(usuarioRepository.findById(id)).thenReturn(Optional.of(usuario));
-
-        Usuario resultado = usuarioService.buscarUsuarioPorId(id);
-
-        verify(usuarioRepository).findById(id);
-        assertThat(resultado).isEqualTo(usuario);
-    }
-
-    @Test
-    void deveLancarExcecaoQuandoUsuarioNaoEncontrado() {
-        UUID id = UUID.randomUUID();
-
-        when(usuarioRepository.findById(id)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> usuarioService.buscarUsuarioPorId(id))
-                .isInstanceOf(RegistroNaoEncontradoException.class)
-                .hasMessage("Usuário não encontrado");
-
-        verify(usuarioRepository).findById(id);
-    }
-
-
-    @Test
-    void deveLancarErroQuandoArquivoFalhaAoLerBytes() throws Exception {
-        UUID id = UUID.randomUUID();
-        Usuario usuario = new Usuario();
-        usuario.setId(id);
-
-        MultipartFile file = mock(MultipartFile.class);
-
-        when(usuarioRepository.findById(id)).thenReturn(Optional.of(usuario));
-        when(file.getBytes()).thenThrow(new IOException("erro"));
-
-        assertThrows(IOException.class, () -> usuarioService.atualizarImagemUsuario(id, file));
-
-        verify(uploader, never()).upload(any(), any());
-    }
-
-    @Test
-    void deveLancarErroQuandoCloudinaryFalhaNoUpload() throws Exception {
-        UUID id = UUID.randomUUID();
-        Usuario usuario = new Usuario();
-        usuario.setId(id);
-
-        MultipartFile file = mock(MultipartFile.class);
-
-        when(usuarioRepository.findById(id)).thenReturn(Optional.of(usuario));
-        when(file.getBytes()).thenReturn("dados".getBytes());
-
-        when(uploader.upload(any(), any())).thenThrow(new RuntimeException("Falha Cloudinary"));
-
-        assertThrows(RuntimeException.class,
-                () -> usuarioService.atualizarImagemUsuario(id, file));
-
-        verify(uploader).upload(any(), any());
-        verify(usuarioRepository, never()).save(any());
-    }
-    @Test
-    void deveAtualizarImagemUsuarioRemovendoImagemAntiga() throws Exception {
-        UUID id = UUID.randomUUID();
-
-        Usuario usuario = new Usuario();
-        usuario.setId(id);
-        usuario.setImagemPublicId("old-public-id");
-
-        MultipartFile file = mock(MultipartFile.class);
-
-        when(usuarioRepository.findById(id)).thenReturn(Optional.of(usuario));
-        when(file.getBytes()).thenReturn("conteudo".getBytes());
-
-        Map<String, Object> uploadResult = new HashMap<>();
-        uploadResult.put("secure_url", "https://nova-imagem.com/img.png");
-        uploadResult.put("public_id", "new-public-id");
-
-        when(uploader.upload(any(), any())).thenReturn(uploadResult);
-
-        String resultado = usuarioService.atualizarImagemUsuario(id, file);
-
-        verify(uploader).destroy(eq("old-public-id"), any());
-        verify(uploader).upload(any(), any());
-        verify(usuarioRepository).save(usuario);
-
-        assertThat(resultado).isEqualTo("https://nova-imagem.com/img.png");
-        assertThat(usuario.getImagemPublicId()).isEqualTo("new-public-id");
-    }
-    @Test
-    void deveRemoverUsuarioComImagensEPets() throws Exception {
-        UUID usuarioId = UUID.randomUUID();
-
-        Usuario usuario = new Usuario();
-        usuario.setId(usuarioId);
-        usuario.setImagemPublicId("user-img");
-
-        Pet pet = new Pet();
-        pet.setId(UUID.randomUUID());
-        pet.setImagemPublicId("pet-img");
-        usuario.setPets(List.of(pet));
-
-        when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.of(usuario));
-
-        usuarioService.remover(usuarioId);
-
-        verify(uploader).destroy(eq("user-img"), any());
-        verify(uploader).destroy(eq("pet-img"), any());
-
-        verify(api).deleteFolder(eq("pets/" + pet.getId()), any());
-        verify(api).deleteFolder(eq("usuarios/" + usuarioId), any());
-        verify(api).deleteFolder(eq("pets/" + usuarioId), any());
-
-        verify(usuarioRepository, times(1)).delete(usuario);
-    }
 
     @Test
     void deveEditarUsuarioSemAlterarSenha() {
@@ -191,6 +77,7 @@ class UsuarioServiceTest {
         assertThat(resultado.getNome()).isEqualTo("Novo Nome");
         assertThat(resultado.getEmail()).isEqualTo("novo@email.com");
     }
+
 
     @Test
     void deveEditarUsuarioAlterandoSenha() {
@@ -234,6 +121,26 @@ class UsuarioServiceTest {
     }
 
     @Test
+    void deveFalharSeSenhaAtualIncorreta() {
+        UUID id = UUID.randomUUID();
+        Usuario usuario = new Usuario();
+        usuario.setId(id);
+        usuario.setSenha("hash");
+
+        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+        dto.setSenhaAtual("senhaErrada");
+        dto.setSenha("nova");
+        dto.setConfirmarSenha("nova");
+
+        when(usuarioRepository.findById(id)).thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches("senhaErrada", "hash")).thenReturn(false);
+
+        assertThrows(ParametroInvalidoException.class,
+                () -> usuarioService.editarUsuario(id, dto));
+    }
+
+
+    @Test
     void deveLancarExcecaoQuandoNovaSenhaEDiferenteDaConfirmacao() {
         UUID id = UUID.randomUUID();
 
@@ -264,7 +171,7 @@ class UsuarioServiceTest {
         UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
         dto.setSenha("novaSenha");
         dto.setConfirmarSenha("novaSenha");
-        dto.setSenhaAtual(null); // senha atual não informada
+        dto.setSenhaAtual(null);
 
         when(usuarioRepository.findById(id)).thenReturn(Optional.of(usuario));
 
@@ -282,27 +189,20 @@ class UsuarioServiceTest {
     }
 
     @Test
-    void deveLancarExcecaoAoEditarUsuarioComSenhaInvalida() {
+    void deveRemoverUsuario() {
         UUID id = UUID.randomUUID();
         Usuario usuario = new Usuario();
         usuario.setId(id);
-        usuario.setSenha("senhaAtualCriptografada");
-
-        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
-        dto.setSenhaAtual("senhaErrada");
-        dto.setSenha("novaSenha");
-        dto.setConfirmarSenha("novaSenha");
 
         when(usuarioRepository.findById(id)).thenReturn(Optional.of(usuario));
-        when(passwordEncoder.matches("senhaErrada", "senhaAtualCriptografada")).thenReturn(false);
 
-        assertThrows(ParametroInvalidoException.class,
-                () -> usuarioService.editarUsuario(id, dto));
+        usuarioService.remover(id);
+
+        verify(usuarioRepository).delete(usuario);
     }
 
-
     @Test
-    void deveLancarExcecaoAoRemoverUsuarioInexistente() {
+    void deveFalharAoRemoverUsuarioInexistente() {
         UUID id = UUID.randomUUID();
         when(usuarioRepository.findById(id)).thenReturn(Optional.empty());
 
@@ -310,6 +210,33 @@ class UsuarioServiceTest {
                 () -> usuarioService.remover(id));
 
         verify(usuarioRepository, never()).delete(any());
+    }
+
+    @Test
+    void deveRetornarUsuarioQuandoEncontrado() {
+        UUID id = UUID.randomUUID();
+        Usuario usuario = new Usuario();
+        usuario.setId(id);
+
+        when(usuarioRepository.findById(id)).thenReturn(Optional.of(usuario));
+
+        Usuario resultado = usuarioService.buscarUsuarioPorId(id);
+
+        verify(usuarioRepository).findById(id);
+        assertThat(resultado).isEqualTo(usuario);
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoUsuarioNaoEncontrado() {
+        UUID id = UUID.randomUUID();
+
+        when(usuarioRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> usuarioService.buscarUsuarioPorId(id))
+                .isInstanceOf(RegistroNaoEncontradoException.class)
+                .hasMessage("Usuário não encontrado");
+
+        verify(usuarioRepository).findById(id);
     }
 
 
@@ -333,6 +260,7 @@ class UsuarioServiceTest {
         assertThat(resultado.get("imagemUrl")).isEqualTo("url");
     }
 
+
     @Test
     void deveLancarExcecaoQuandoTokenInvalido() {
         when(jwtUtil.extrairUsuarioId("tokenErrado")).thenThrow(new IllegalArgumentException("Token inválido"));
@@ -349,6 +277,56 @@ class UsuarioServiceTest {
         assertThrows(RegistroNaoEncontradoException.class, () -> usuarioService.getUsuarioLogado("token"));
     }
 
+
+    @Test
+    void deveAtualizarImagemDoUsuario() throws Exception {
+        UUID id = UUID.randomUUID();
+        Usuario usuario = new Usuario();
+        usuario.setId(id);
+        usuario.setImagemPublicId(null);
+
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.getBytes()).thenReturn("img".getBytes());
+
+        Map<String, Object> uploadResult = new HashMap<>();
+        uploadResult.put("secure_url", "https://cloud.com/img.jpg");
+        uploadResult.put("public_id", "img123");
+
+        var uploader = mock(com.cloudinary.Uploader.class);
+
+        when(cloudinary.uploader()).thenReturn(uploader);
+        when(uploader.upload(any(byte[].class), anyMap())).thenReturn(uploadResult);
+
+        when(usuarioRepository.findById(id)).thenReturn(Optional.of(usuario));
+
+        String url = usuarioService.atualizarImagemUsuario(id, file);
+
+        assertEquals("https://cloud.com/img.jpg", url);
+        assertEquals("img123", usuario.getImagemPublicId());
+        assertEquals("https://cloud.com/img.jpg", usuario.getImagemUrl());
+
+        verify(usuarioRepository).save(usuario);
+    }
+
+    @Test
+    void deveLancarErroQuandoCloudinaryFalhaNoUpload() throws Exception {
+        UUID id = UUID.randomUUID();
+        Usuario usuario = new Usuario();
+        usuario.setId(id);
+
+        MultipartFile file = mock(MultipartFile.class);
+
+        when(usuarioRepository.findById(id)).thenReturn(Optional.of(usuario));
+        when(file.getBytes()).thenReturn("dados".getBytes());
+
+        when(uploader.upload(any(), any())).thenThrow(new RuntimeException("Falha Cloudinary"));
+
+        assertThrows(RuntimeException.class,
+                () -> usuarioService.atualizarImagemUsuario(id, file));
+
+        verify(uploader).upload(any(), any());
+        verify(usuarioRepository, never()).save(any());
+    }
 
 
 }

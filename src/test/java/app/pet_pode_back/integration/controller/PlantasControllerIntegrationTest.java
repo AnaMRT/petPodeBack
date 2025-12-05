@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -89,7 +88,48 @@ class PlantasControllerIntegrationTest {
                 .andExpect(jsonPath("$[0].nomePopular").value("Costela de Adão"));
     }
 
+    @Test
+    void deveListarPlantasVazia() throws Exception {
+        plantaRepository.deleteAll();
 
+        mockMvc.perform(get("/plantas")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+
+    @Test
+    void deveRetornarBadRequestQuandoHeaderAuthorizationAusente() throws Exception {
+        mockMvc.perform(get("/plantas/search")
+                        .param("termo", "qualquer"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value("O header Authorization é obrigatório."));
+    }
+
+    @Test
+    void deveBuscarMesmoSeUsuarioNaoTemPet() throws Exception {
+        plantaRepository.save(new Plantas(
+                null,
+                "Rosa",
+                "Rosa spp.",
+                "Descrição",
+                false,
+                false,
+                null
+        ));
+
+        usuario.setPets(List.of());
+        usuarioRepository.save(usuario);
+
+        mockMvc.perform(get("/plantas/search")
+                        .param("termo", "rosa")
+                        .header("Authorization", token)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
 
     @Test
     void deveBuscarPlantasComTokenValido() throws Exception {
@@ -114,51 +154,6 @@ class PlantasControllerIntegrationTest {
 
 
     @Test
-    void deveRetornarBadRequestQuandoHeaderAuthorizationAusente() throws Exception {
-        mockMvc.perform(get("/plantas/search")
-                        .param("termo", "qualquer"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.mensagem").value("O header Authorization é obrigatório."));
-    }
-
-
-
-    @Test
-    void deveBuscarMesmoSeUsuarioNaoTemPet() throws Exception {
-        // salva uma planta que não bate com nada
-        plantaRepository.save(new Plantas(
-                null,
-                "Rosa",
-                "Rosa spp.",
-                "Descrição",
-                false,
-                false,
-                null
-        ));
-
-        usuario.setPets(List.of());
-        usuarioRepository.save(usuario);
-
-        mockMvc.perform(get("/plantas/search")
-                        .param("termo", "rosa")
-                        .header("Authorization", token)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
-    }
-
-    @Test
-    void deveListarPlantasVazia() throws Exception {
-        plantaRepository.deleteAll();
-
-        mockMvc.perform(get("/plantas")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty());
-    }
-
-    @Test
     void deveRetornar404QuandoUsuarioNaoExistirAoBuscarPlantas() throws Exception {
         UUID idInexistente = UUID.randomUUID();
         String tokenFake = "Bearer " + jwtUtil.gerarToken(idInexistente);
@@ -170,6 +165,7 @@ class PlantasControllerIntegrationTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.mensagem").value("Usuário não encontrado"));
     }
+
     @Test
     void deveBuscarPlantasComTermoParcial() throws Exception {
         Plantas p = new Plantas(
@@ -183,7 +179,6 @@ class PlantasControllerIntegrationTest {
         );
         plantaRepository.save(p);
 
-        // Busca usando parte do nome: "azal"
         mockMvc.perform(get("/plantas/search")
                         .param("termo", "azal")
                         .header("Authorization", token)
@@ -194,7 +189,6 @@ class PlantasControllerIntegrationTest {
 
     @Test
     void deveBuscarIgnorandoAcentuacao() throws Exception {
-        // Salva planta com acento
         Plantas p = new Plantas(
                 null,
                 "Costela-de-Adão",
@@ -206,7 +200,6 @@ class PlantasControllerIntegrationTest {
         );
         plantaRepository.save(p);
 
-        // Busca sem acento: "adao"
         mockMvc.perform(get("/plantas/search")
                         .param("termo", "adao")
                         .header("Authorization", token)

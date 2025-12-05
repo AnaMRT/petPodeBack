@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -33,12 +34,7 @@ public class PlantasController {
     public ResponseEntity<List<Plantas>> listar() {
         return ResponseEntity.ok(plantaService.listarTodos());
     }
-    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Plantas> cadastrar(@RequestBody @Valid Plantas plantas) {
-        Plantas salva = plantaService.cadastrar(plantas);
-        return ResponseEntity.status(HttpStatus.CREATED).body(salva);
-    }
+
     @GetMapping("/search")
     public ResponseEntity<List<Plantas>> buscar(
             @RequestParam(value = "termo", defaultValue = "") String termo,
@@ -51,11 +47,6 @@ public class PlantasController {
         Pet pet = usuario.getPets().stream().findFirst().orElse(null);
 
         return ResponseEntity.ok(plantaService.buscarPlantas(termo, pet));
-    }
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> remover(@PathVariable UUID id) {
-        plantaService.remover(id);
-        return ResponseEntity.noContent().build();
     }
 }
 

@@ -4,6 +4,7 @@ package app.pet_pode_back.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
 import java.util.Objects;
 import java.util.UUID;
 
@@ -31,8 +32,10 @@ public class Plantas {
     private Boolean toxicaParaFelinos;
     @Column
     private String imagemUrl;
+
     public Plantas() {
     }
+
     public Plantas(UUID id, String nomePopular,
                    String nomeCientifico, String descricao,
                    Boolean toxicaParaCaninos,
@@ -45,6 +48,7 @@ public class Plantas {
         this.toxicaParaFelinos = toxicaParaFelinos;
         this.imagemUrl = imagemUrl;
     }
+
     public void setNomePopular(String nomePopular) {
         this.nomePopular = nomePopular;
     }

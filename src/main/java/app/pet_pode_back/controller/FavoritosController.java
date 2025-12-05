@@ -6,6 +6,7 @@ import app.pet_pode_back.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.Set;
 import java.util.UUID;
 
@@ -26,6 +27,7 @@ public class FavoritosController {
         favoritosService.adicionarFavorito(usuarioId, plantaId);
         return ResponseEntity.ok().build();
     }
+
     @DeleteMapping("/{plantaId}")
     public ResponseEntity<Void> remover(@PathVariable UUID plantaId,
                                         @RequestHeader("Authorization") String token) {
@@ -33,6 +35,7 @@ public class FavoritosController {
         favoritosService.removerFavorito(usuarioId, plantaId);
         return ResponseEntity.ok().build();
     }
+
     @GetMapping
     public ResponseEntity<Set<Plantas>> listar(@RequestHeader("Authorization") String token) {
         UUID usuarioId = jwtUtil.extrairUsuarioId(token.replace("Bearer ", "").trim());

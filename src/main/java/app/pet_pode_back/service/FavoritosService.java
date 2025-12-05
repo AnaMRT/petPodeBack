@@ -7,8 +7,10 @@ import app.pet_pode_back.repository.PlantaRepository;
 import app.pet_pode_back.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.Set;
 import java.util.UUID;
+
 @Service
 public class FavoritosService {
     @Autowired
@@ -26,6 +28,7 @@ public class FavoritosService {
         usuario.addFavorito(planta);
         usuarioRepository.save(usuario);
     }
+
     public void removerFavorito(UUID usuarioId, UUID plantaId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RegistroNaoEncontradoException("Usuário não encontrado"));
@@ -36,6 +39,7 @@ public class FavoritosService {
         usuario.removeFavorito(planta);
         usuarioRepository.save(usuario);
     }
+
     public Set<Plantas> listarFavoritos(UUID usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RegistroNaoEncontradoException("Usuário não encontrado"));

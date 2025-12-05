@@ -28,10 +28,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import com.cloudinary.Cloudinary;
-import com.cloudinary.Uploader;
 
-import org.springframework.boot.test.mock.mockito.MockBean;
+import com.cloudinary.Uploader;
 import org.springframework.web.multipart.MultipartFile;
 
 import static org.mockito.Mockito.*;
@@ -133,6 +131,17 @@ public class PetServiceIntegrationTest {
         assertThat(atualizado.getEspecie()).isEqualTo("Felino");
     }
 
+    @Test
+    void deveLancarErroAoEditarPetInexistente() {
+        PetUpdateDTO dto = new PetUpdateDTO();
+        dto.setNome("Qualquer");
+        dto.setEspecie("Felino");
+
+        assertThatThrownBy(() ->
+                petService.editarPet(UUID.randomUUID(), usuario.getId(), dto))
+                .isInstanceOf(PetNotFoundException.class)
+                .hasMessage("Pet não encontrado.");
+    }
 
 
     @Test
@@ -147,25 +156,12 @@ public class PetServiceIntegrationTest {
 
         PetUpdateDTO dto = new PetUpdateDTO();
         dto.setNome("Novo");
-        dto.setEspecie("Felino"); // AGORA OBRIGATÓRIO
+        dto.setEspecie("Felino");
 
         assertThatThrownBy(() ->
                 petService.editarPet(pet.getId(), usuario.getId(), dto))
                 .isInstanceOf(SemPermissaoException.class)
                 .hasMessage("Você não tem permissão para alterar esse pet.");
-    }
-
-
-    @Test
-    void deveLancarErroAoEditarPetInexistente() {
-        PetUpdateDTO dto = new PetUpdateDTO();
-        dto.setNome("Qualquer");
-        dto.setEspecie("Felino"); // OBRIGATÓRIO
-
-        assertThatThrownBy(() ->
-                petService.editarPet(UUID.randomUUID(), usuario.getId(), dto))
-                .isInstanceOf(PetNotFoundException.class)
-                .hasMessage("Pet não encontrado.");
     }
 
 
@@ -256,6 +252,7 @@ public class PetServiceIntegrationTest {
                 .isInstanceOf(SemPermissaoException.class)
                 .hasMessage("Você não tem permissão para alterar esse pet.");
     }
+
     @Test
     void deveLancarErroQuandoUploadFalhar() throws Exception {
         Pet pet = petRepository.save(new Pet(null, "Rex", "Canino", usuario));
@@ -272,12 +269,6 @@ public class PetServiceIntegrationTest {
                 .hasMessage("Falha ao enviar imagem");
     }
 
-    @Test
-    void deveLancarErroQuandoPetForNull() {
-        assertThatThrownBy(() ->
-                petService.salvarPet(null, usuario.getId())
-        ).isInstanceOf(NullPointerException.class);
-    }
 
     @Test
     void deveDeletarImagemAntigaAntesDeAtualizar() throws Exception {
@@ -291,6 +282,14 @@ public class PetServiceIntegrationTest {
 
         verify(uploaderMock).destroy(eq("old-img"), any());
     }
+
+    @Test
+    void deveLancarErroQuandoPetForNull() {
+        assertThatThrownBy(() ->
+                petService.salvarPet(null, usuario.getId())
+        ).isInstanceOf(NullPointerException.class);
+    }
+
     @Test
     void deveRetornarMensagemCorretaQuandoUsuarioNaoEncontrado() {
         Pet pet = new Pet(null, "Rex", "Canino", null);
