@@ -28,6 +28,12 @@ public class FavoritosController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping
+    public ResponseEntity<Set<Plantas>> listar(@RequestHeader("Authorization") String token) {
+        UUID usuarioId = jwtUtil.extrairUsuarioId(token.replace("Bearer ", "").trim());
+        return ResponseEntity.ok(favoritosService.listarFavoritos(usuarioId));
+    }
+
     @DeleteMapping("/{plantaId}")
     public ResponseEntity<Void> remover(@PathVariable UUID plantaId,
                                         @RequestHeader("Authorization") String token) {
@@ -35,12 +41,4 @@ public class FavoritosController {
         favoritosService.removerFavorito(usuarioId, plantaId);
         return ResponseEntity.ok().build();
     }
-
-    @GetMapping
-    public ResponseEntity<Set<Plantas>> listar(@RequestHeader("Authorization") String token) {
-        UUID usuarioId = jwtUtil.extrairUsuarioId(token.replace("Bearer ", "").trim());
-        return ResponseEntity.ok(favoritosService.listarFavoritos(usuarioId));
-    }
-
-
 }

@@ -42,16 +42,6 @@ public class PetController {
         return ResponseEntity.ok(petService.listarPetsPorUsuario(usuarioId));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> excluir(
-            @PathVariable UUID id,
-            @RequestHeader("Authorization") String token) {
-
-        UUID usuarioId = jwtUtil.extrairUsuarioId(token.replace("Bearer ", ""));
-        petService.excluirPetDoUsuario(usuarioId, id);
-        return ResponseEntity.noContent().build();
-    }
-
     @PutMapping("/{id}")
     public ResponseEntity<Pet> editar(
             @PathVariable UUID id,
@@ -71,6 +61,16 @@ public class PetController {
         UUID usuarioId = jwtUtil.extrairUsuarioId(token.replace("Bearer ", ""));
         String url = petService.atualizarImagemPet(id, usuarioId, file);
         return ResponseEntity.ok(Map.of("imagemUrl", url));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> excluir(
+            @PathVariable UUID id,
+            @RequestHeader("Authorization") String token) {
+
+        UUID usuarioId = jwtUtil.extrairUsuarioId(token.replace("Bearer ", ""));
+        petService.excluirPetDoUsuario(usuarioId, id);
+        return ResponseEntity.noContent().build();
     }
 }
 
