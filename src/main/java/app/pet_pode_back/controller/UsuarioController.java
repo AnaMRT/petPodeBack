@@ -38,11 +38,6 @@ public class UsuarioController {
     @Autowired
     private Cloudinary cloudinary;
 
-    @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<List<Usuario>> get() {
-        return ResponseEntity.status(HttpStatus.OK).body(usuarioService.listarTodos());
-    }
-
     @PutMapping
     public ResponseEntity<Usuario> editar(
             @RequestBody @Valid UsuarioUpdateDTO dto,

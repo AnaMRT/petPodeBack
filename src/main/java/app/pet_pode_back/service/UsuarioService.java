@@ -30,10 +30,6 @@ public class UsuarioService {
     @Autowired
     private JwtUtil jwtUtil;
 
-    public List<Usuario> listarTodos() {
-        return usuarioRepository.findAll();
-    }
-
     public Usuario editarUsuario(UUID usuarioId, UsuarioUpdateDTO dto) {
         Usuario usuario = buscarUsuarioPorId(usuarioId);
 
