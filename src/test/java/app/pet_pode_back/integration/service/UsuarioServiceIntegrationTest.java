@@ -41,13 +41,10 @@ class UsuarioServiceIntegrationTest {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-
     private Usuario usuarioPadrao;
-
 
     @MockBean
     private Cloudinary cloudinary;

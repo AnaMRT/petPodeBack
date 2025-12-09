@@ -1,11 +1,9 @@
 package app.pet_pode_back.service;
 
-import app.pet_pode_back.exception.RegistroNaoEncontradoException;
 import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.model.Plantas;
 import app.pet_pode_back.repository.PlantaRepository;
 import app.pet_pode_back.util.StringUtils;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

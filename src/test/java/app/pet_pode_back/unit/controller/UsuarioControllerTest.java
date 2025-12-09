@@ -262,7 +262,7 @@ class UsuarioControllerTest {
         mockMvc.perform(multipart("/usuario/imagem")
                         .file(arquivo)
                         .with(request -> {
-                            request.setMethod("PUT"); // 👈 NECESSÁRIO para PUT
+                            request.setMethod("PUT");
                             return request;
                         })
                         .header("Authorization", "Bearer token")

@@ -67,7 +67,7 @@ class FavoritosServiceIntegrationTest {
     @Test
     void deveAdicionarMesmaPlantaApenasUmaVez() {
         favoritosService.adicionarFavorito(usuario.getId(), planta.getId());
-        favoritosService.adicionarFavorito(usuario.getId(), planta.getId()); // segunda vez
+        favoritosService.adicionarFavorito(usuario.getId(), planta.getId());
 
         Set<Plantas> favoritos = favoritosService.listarFavoritos(usuario.getId());
         assertEquals(1, favoritos.size(), "A planta não deve ser duplicada");

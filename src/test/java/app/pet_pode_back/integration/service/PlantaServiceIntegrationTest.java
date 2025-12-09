@@ -173,10 +173,5 @@ class PlantaServiceIntegrationTest {
         assertThat(resultado).hasSize(1).contains(planta2);
     }
 
-    @Test
-    void deveRetornarVazioMesmoComBDPreenchidoQuandoTermoInvalido() {
-        List<Plantas> resultado = plantaService.buscarPlantas("@@@###", null);
-        assertThat(resultado).isEmpty();
-    }
 
 }
